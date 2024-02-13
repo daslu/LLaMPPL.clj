@@ -1,6 +1,6 @@
 # LLaMPPL.clj
 
-This repo explores the [LLaMPPL](https://arxiv.org/abs/2306.03081) underlying algorithms from Clojure using [llama.clj](https://github.com/phronmophobic/llama.clj).
+This repo explores the [LLaMPPL](https://github.com/probcomp/LLaMPPL) underlying algorithms from Clojure using [llama.clj](https://github.com/phronmophobic/llama.clj).
 
 Probably, it will be moved under another organisation in case the project seems promising.
 
