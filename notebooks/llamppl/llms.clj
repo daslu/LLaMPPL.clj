@@ -1,11 +1,14 @@
 (ns llamppl.llms
   (:require [com.phronemophobic.llama :as llama]
             [com.phronemophobic.llama.raw :as raw]
+            [com.phronemophobic.llama.util :as llutil]
             [tech.v3.datatype.argops :as argops]
             [scicloj.kindly.v4.kind :as kind]
             [scicloj.kindly.v4.api :as kindly]
             [scicloj.noj.v1.vis.hanami :as hanami]
-            [aerial.hanami.templates :as ht]))
+            [tablecloth.api :as tc]
+            [aerial.hanami.templates :as ht]
+            [clojure.math :as math]))
 
 ^:kind/hide-code
 (def md

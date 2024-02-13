@@ -3,7 +3,7 @@
             [com.phronemophobic.llama.raw :as raw]
             [scicloj.kindly.v4.kind :as kind]
             [scicloj.kindly.v4.api :as kindly]
-            []))
+            [llamppl.llms :as llms]))
 
 ^:kind/hide-code
 (def md
@@ -26,4 +26,4 @@ To avoid garbage collection, we will allocate our memory slots space once, and m
 (defonce states-storage
   (vec (repeatedly
         n-states
-        #(byte-array state-size))))
+        #(byte-array llms/state-size))))
