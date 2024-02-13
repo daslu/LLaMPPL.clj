@@ -6,5 +6,5 @@ At the moment, it demonstrates implementing the Sequential Monte Carlo algoritm 
 
 The main effort so far has been in tackling some of the caching challenges.
 
-
+[rendered notes](https://daslu.github.io/LLaMPPL.clj)
 
