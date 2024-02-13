@@ -3,3 +3,4 @@
 .clay.html
 .clay_files
 *.qmd
+temp/
