@@ -1,3 +1,4 @@
+^:kindly/hide-code
 (ns setup)
 
 ;; # Setup

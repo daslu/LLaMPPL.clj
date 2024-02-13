@@ -1,18 +1,11 @@
 (ns llms
-  (:require [tech.v3.datatype :as dtype]
-            [com.phronemophobic.llama :as llama]
+  (:require [com.phronemophobic.llama :as llama]
             [com.phronemophobic.llama.raw :as raw]
-            [com.phronemophobic.llama.util :as llutil]
             [tech.v3.datatype.argops :as argops]
-            [clojure.math :as math]
             [scicloj.kindly.v4.kind :as kind]
             [scicloj.kindly.v4.api :as kindly]
             [scicloj.noj.v1.vis.hanami :as hanami]
-            [aerial.hanami.templates :as ht]
-            [tablecloth.api :as tc]
-            [clojure.string :as str]
-            [clojure.walk :as walk]
-            [tech.v3.datatype.functional :as fun]))
+            [aerial.hanami.templates :as ht]))
 
 (def md
   (comp kindly/hide-code kind/md))
@@ -31,7 +24,7 @@ We will use [llama.clj](https://github.com/phronmophobic/llama.clj), a Clojure w
 ;; One megabyte:
 (def MB (math/pow 2 20))
 
-;; ## Basics
+;; ## Models
 
 ;; Creating a new model context:
 (defn new-llama-ctx []
@@ -43,6 +36,8 @@ We will use [llama.clj](https://github.com/phronmophobic/llama.clj), a Clojure w
 ;; (to extract basic information):
 (def base-llama-ctx
   (new-llama-ctx))
+
+;; ## Tokens
 
 ;; A function to turn a String of text to a list of tokens:
 (defn tokenize [text]
@@ -81,3 +76,59 @@ We will use [llama.clj](https://github.com/phronmophobic/llama.clj), a Clojure w
 
 ;; The EOS (end-of-sentence) token:
 (def llama-eos (llama/eos base-llama-ctx))
+
+;; Checking whether a sequence of tokens has ended.
+(defn finished? [tokens]
+  (->> tokens
+       (some (partial = llama-eos))
+       some?))
+
+;; ## Probabilities
+
+;; Example: Getting next-token logits for a given piece of text.
+(delay
+  (-> (new-llama-ctx)
+      ;; Note thwe are **mutating** the context
+      (llama/llama-update "How much wood would a")
+      llama/get-logits
+      (->> (take 5))
+      vec))
+
+;; Let us look at the distribution of logits.
+
+(delay
+  (-> (new-llama-ctx)
+      (llama/llama-update "How much wood would a")
+      llama/get-logits
+      (->> (hash-map :logit))
+      tc/dataset
+      (hanami/histogram :logit {:nbins 100})
+      (assoc :height 200)))
+
+;; Example: Picking the next token of the highest probability.
+
+(delay
+  (let [llama-ctx (new-llama-ctx)]
+    (-> llama-ctx
+        (llama/llama-update "How much wood would a")
+        llama/get-logits
+        argops/argmax
+        token->str)))
+
+;; ## Keeping copies of context state
+
+(def state-size
+  (-> base-llama-ctx
+      (raw/llama_get_state_size)))
+
+;; How big is this state?
+(delay
+  (-> state-size
+      (/ MB)
+      (->> (format "%.02f MB"))))
+
+;; Let us keep a copy of the state of our base context:
+(def base-state-data
+  (let [mem (byte-array state-size)]
+    (raw/llama_copy_state_data base-llama-ctx mem)
+    mem))
