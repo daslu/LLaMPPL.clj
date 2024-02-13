@@ -6,7 +6,8 @@
              :source-path ["index.clj"
                            "setup.clj"
                            "utils.clj"
-                           "llms.clj"]
+                           "llms.clj"
+                           "cache.clj"]
              :base-target-path "docs"
              :book {:title "LLaMPPL.clj"}
              :clean-up-target-dir true})
