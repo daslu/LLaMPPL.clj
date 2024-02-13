@@ -4,7 +4,7 @@
     "href": "index.html",
     "title": "LLaMPPL.clj",
     "section": "",
-    "text": "1 Preface\nThis repo explores the LLaMPPL underlying algorithms from Clojure using llama.clj.\nAt the moment, it demonstrates implementing the Sequential Monte Carlo algoritm on a specific case, the Hard Constraints case generating texts with only short words with a certain choice of M (the Markove kernel) and G (the potential function), not the most efficient one.\nThe main effort so far has been in tackling some of the caching challenges.\n\nsource: notebooks/index.clj",
+    "text": "1 Preface\nThis repo explores the LLaMPPL underlying algorithms from Clojure using llama.clj.\nSee Sequential Monte Carlo Steering of Large Language Models using Probabilistic Programs by Alexander K. Lew, Tan Zhi-Xuan, Gabriel Grand, Vikash K. Mansinghka (see Figure 1 and Subsection 2.2).\nAt the moment, we demonstrate implementing the Sequential Monte Carlo algoritm on a specific case, the Hard Constraints case generating texts with only short words with a certain choice of M (the Markove kernel) and G (the potential function), not the most efficient one.\nThe main effort so far has been in tackling some of the caching challenges.\n\nsource: notebooks/index.clj",
     "crumbs": [
       "<span class='chapter-number'>1</span>  <span class='chapter-title'>Preface</span>"
     ]
