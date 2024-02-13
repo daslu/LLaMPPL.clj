@@ -10,23 +10,53 @@
     ]
   },
   {
+    "objectID": "setup.html",
+    "href": "setup.html",
+    "title": "2  Setup",
+    "section": "",
+    "text": "(ns setup)\n\n(to be documented soon)\n\nsource: notebooks/setup.clj",
+    "crumbs": [
+      "<span class='chapter-number'>2</span>  <span class='chapter-title'>Setup</span>"
+    ]
+  },
+  {
     "objectID": "utils.html",
     "href": "utils.html",
-    "title": "2  A few utility functions",
+    "title": "3  A few utility functions",
     "section": "",
     "text": "(ns utils)\n\n\n(defn now []\n  (java.util.Date.))\n\n\nsource: notebooks/utils.clj",
     "crumbs": [
-      "<span class='chapter-number'>2</span>  <span class='chapter-title'>A few utility functions</span>"
+      "<span class='chapter-number'>3</span>  <span class='chapter-title'>A few utility functions</span>"
     ]
   },
   {
     "objectID": "llms.html",
     "href": "llms.html",
-    "title": "3  LLMs: Using llama.clj",
+    "title": "4  LLMs: Using llama.clj",
     "section": "",
-    "text": "(ns llms\n  (:require [tech.v3.datatype :as dtype]\n            [com.phronemophobic.llama :as llama]\n            [com.phronemophobic.llama.raw :as raw]\n            [com.phronemophobic.llama.util :as llutil]\n            [tech.v3.datatype.argops :as argops]\n            [clojure.math :as math]\n            [scicloj.kindly.v4.kind :as kind]\n            [scicloj.kindly.v4.api :as kindly]\n            [scicloj.noj.v1.vis.hanami :as hanami]\n            [aerial.hanami.templates :as ht]\n            [tablecloth.api :as tc]\n            [clojure.string :as str]\n            [clojure.walk :as walk]\n            [tech.v3.datatype.functional :as fun]))\n\n\n(def md\n  (comp kindly/hide-code kind/md))\n\n\nsource: notebooks/llms.clj",
+    "text": "4.1 Constants\nPath to the LLM:\nOne megabyte:",
     "crumbs": [
-      "<span class='chapter-number'>3</span>  <span class='chapter-title'>LLMs: Using llama.clj</span>"
+      "<span class='chapter-number'>4</span>  <span class='chapter-title'>LLMs: Using llama.clj</span>"
+    ]
+  },
+  {
+    "objectID": "llms.html#constants",
+    "href": "llms.html#constants",
+    "title": "4  LLMs: Using llama.clj",
+    "section": "",
+    "text": "(def llama7b-path\n  (str (System/getenv \"MODELS_PATH\")\n       \"/llama-2-7b-chat.ggmlv3.q4_0.bin\"))\n\n\n\n(def MB (math/pow 2 20))",
+    "crumbs": [
+      "<span class='chapter-number'>4</span>  <span class='chapter-title'>LLMs: Using llama.clj</span>"
+    ]
+  },
+  {
+    "objectID": "llms.html#basics",
+    "href": "llms.html#basics",
+    "title": "4  LLMs: Using llama.clj",
+    "section": "4.2 Basics",
+    "text": "4.2 Basics\nCreating a new model context:\n\n(defn new-llama-ctx []\n  (llama/create-context\n   llama7b-path\n   {:use-mlock true}))\n\nA copy of an empty model (to extract basic information):\n\n(def base-llama-ctx\n  (new-llama-ctx))\n\nA function to turn a String of text to a list of tokens:\n\n(defn tokenize [text]\n  (llutil/tokenize base-llama-ctx text))\n\nExample:\n\n(delay\n  (-&gt; \"The Fed says\"\n      tokenize))\n\n\n[1576 17972 4083]\n\nA function to turn a list of tokens to a String of text:\n\n(defn untokenize [tokens]\n  (llutil/untokenize base-llama-ctx tokens))\n\nExample:\n\n(delay\n  (-&gt; \"The Fed says\"\n      tokenize\n      untokenize))\n\n\n\"The Fed says\"\n\nA map from tokens to the corresponding strings:\n\n(def token-&gt;str\n  (into (sorted-map)\n        (comp (map\n               (fn [token]\n                 [token (raw/llama_token_to_str base-llama-ctx token)]))\n              (take-while (fn [[token untoken]]\n                            untoken)))\n        (range 0 Integer/MAX_VALUE)))\n\nExample:\n\n(delay\n  (-&gt;&gt; \"The Fed says\"\n       tokenize\n       (map token-&gt;str)))\n\n\n(\"The\" \" Fed\" \" says\")\n\nThe EOS (end-of-sentence) token:\n\n(def llama-eos (llama/eos base-llama-ctx))\n\n\nsource: notebooks/llms.clj",
+    "crumbs": [
+      "<span class='chapter-number'>4</span>  <span class='chapter-title'>LLMs: Using llama.clj</span>"
     ]
   }
 ]
