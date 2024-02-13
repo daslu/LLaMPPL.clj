@@ -7,6 +7,7 @@
             [scicloj.noj.v1.vis.hanami :as hanami]
             [aerial.hanami.templates :as ht]))
 
+^:kind/hide-code
 (def md
   (comp kindly/hide-code kind/md))
 
