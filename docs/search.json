@@ -20,18 +20,18 @@
     ]
   },
   {
-    "objectID": "utils.html",
-    "href": "utils.html",
+    "objectID": "llamppl.utils.html",
+    "href": "llamppl.utils.html",
     "title": "3  A few utility functions",
     "section": "",
-    "text": "(ns utils)\n\n\n(defn now []\n  (java.util.Date.))\n\n\nsource: notebooks/utils.clj",
+    "text": "(ns llamppl.utils)\n\n\n(defn now []\n  (java.util.Date.))\n\n\nsource: notebooks/llamppl/utils.clj",
     "crumbs": [
       "<span class='chapter-number'>3</span>  <span class='chapter-title'>A few utility functions</span>"
     ]
   },
   {
-    "objectID": "llms.html",
-    "href": "llms.html",
+    "objectID": "llamppl.llms.html",
+    "href": "llamppl.llms.html",
     "title": "4  LLMs: Using llama.clj",
     "section": "",
     "text": "4.1 Constants\nPath to the LLM:\nOne megabyte:",
@@ -40,8 +40,8 @@
     ]
   },
   {
-    "objectID": "llms.html#constants",
-    "href": "llms.html#constants",
+    "objectID": "llamppl.llms.html#constants",
+    "href": "llamppl.llms.html#constants",
     "title": "4  LLMs: Using llama.clj",
     "section": "",
     "text": "(def llama7b-path\n  (str (System/getenv \"MODELS_PATH\")\n       \"/llama-2-7b-chat.ggmlv3.q4_0.bin\"))\n\n\n\n(def MB (math/pow 2 20))",
@@ -50,8 +50,8 @@
     ]
   },
   {
-    "objectID": "llms.html#models",
-    "href": "llms.html#models",
+    "objectID": "llamppl.llms.html#models",
+    "href": "llamppl.llms.html#models",
     "title": "4  LLMs: Using llama.clj",
     "section": "4.2 Models",
     "text": "4.2 Models\nCreating a new model context:\n\n(defn new-llama-ctx []\n  (llama/create-context\n   llama7b-path\n   {:use-mlock true}))\n\nA copy of an empty model (to extract basic information):\n\n(def base-llama-ctx\n  (new-llama-ctx))",
@@ -60,8 +60,8 @@
     ]
   },
   {
-    "objectID": "llms.html#tokens",
-    "href": "llms.html#tokens",
+    "objectID": "llamppl.llms.html#tokens",
+    "href": "llamppl.llms.html#tokens",
     "title": "4  LLMs: Using llama.clj",
     "section": "4.3 Tokens",
     "text": "4.3 Tokens\nA function to turn a String of text to a list of tokens:\n\n(defn tokenize [text]\n  (llutil/tokenize base-llama-ctx text))\n\nExample:\n\n(delay\n  (-&gt; \"The Fed says\"\n      tokenize))\n\n\n[1576 17972 4083]\n\nA function to turn a list of tokens to a String of text:\n\n(defn untokenize [tokens]\n  (llutil/untokenize base-llama-ctx tokens))\n\nExample:\n\n(delay\n  (-&gt; \"The Fed says\"\n      tokenize\n      untokenize))\n\n\n\"The Fed says\"\n\nA map from tokens to the corresponding strings:\n\n(def token-&gt;str\n  (into (sorted-map)\n        (comp (map\n               (fn [token]\n                 [token (raw/llama_token_to_str base-llama-ctx token)]))\n              (take-while (fn [[token untoken]]\n                            untoken)))\n        (range 0 Integer/MAX_VALUE)))\n\nExample:\n\n(delay\n  (-&gt;&gt; \"The Fed says\"\n       tokenize\n       (map token-&gt;str)))\n\n\n(\"The\" \" Fed\" \" says\")\n\nThe EOS (end-of-sentence) token:\n\n(def llama-eos (llama/eos base-llama-ctx))\n\nChecking whether a sequence of tokens has ended.\n\n(defn finished? [tokens]\n  (-&gt;&gt; tokens\n       (some (partial = llama-eos))\n       some?))",
@@ -70,8 +70,8 @@
     ]
   },
   {
-    "objectID": "llms.html#probabilities",
-    "href": "llms.html#probabilities",
+    "objectID": "llamppl.llms.html#probabilities",
+    "href": "llamppl.llms.html#probabilities",
     "title": "4  LLMs: Using llama.clj",
     "section": "4.4 Probabilities",
     "text": "4.4 Probabilities\nExample: Getting next-token logits for a given piece of text.\n\n(delay\n  (-&gt; (new-llama-ctx)\n      ;; Note thwe are **mutating** the context\n      (llama/llama-update \"How much wood would a\")\n      llama/get-logits\n      (-&gt;&gt; (take 5))\n      vec))\n\n\n[-4.3994875 -4.41101 3.215666 -3.3254027 -1.6136708]\n\nLet us look at the distribution of logits.\n\n(delay\n  (-&gt; (new-llama-ctx)\n      (llama/llama-update \"How much wood would a\")\n      llama/get-logits\n      (-&gt;&gt; (hash-map :logit))\n      tc/dataset\n      (hanami/histogram :logit {:nbins 100})\n      (assoc :height 200)))\n\n\nExample: Picking the next token of the highest probability.\n\n(delay\n  (let [llama-ctx (new-llama-ctx)]\n    (-&gt; llama-ctx\n        (llama/llama-update \"How much wood would a\")\n        llama/get-logits\n        argops/argmax\n        token-&gt;str)))\n\n\n\" wood\"",
@@ -80,13 +80,43 @@
     ]
   },
   {
-    "objectID": "llms.html#keeping-copies-of-context-state",
-    "href": "llms.html#keeping-copies-of-context-state",
+    "objectID": "llamppl.llms.html#keeping-copies-of-context-state",
+    "href": "llamppl.llms.html#keeping-copies-of-context-state",
     "title": "4  LLMs: Using llama.clj",
     "section": "4.5 Keeping copies of context state",
-    "text": "4.5 Keeping copies of context state\n\n(def state-size\n  (-&gt; base-llama-ctx\n      (raw/llama_get_state_size)))\n\nHow big is this state?\n\n(delay\n  (-&gt; state-size\n      (/ MB)\n      (-&gt;&gt; (format \"%.02f MB\"))))\n\n\n\"258.18 MB\"\n\nLet us keep a copy of the state of our base context:\n\n(def base-state-data\n  (let [mem (byte-array state-size)]\n    (raw/llama_copy_state_data base-llama-ctx mem)\n    mem))\n\n\nsource: notebooks/llms.clj",
+    "text": "4.5 Keeping copies of context state\n\n(def state-size\n  (-&gt; base-llama-ctx\n      (raw/llama_get_state_size)))\n\nHow big is this state?\n\n(delay\n  (-&gt; state-size\n      (/ MB)\n      (-&gt;&gt; (format \"%.02f MB\"))))\n\n\n\"258.18 MB\"\n\nLet us keep a copy of the state of our base context:\n\n(def base-state-data\n  (let [mem (byte-array state-size)]\n    (raw/llama_copy_state_data base-llama-ctx mem)\n    mem))\n\n\nsource: notebooks/llamppl/llms.clj",
     "crumbs": [
       "<span class='chapter-number'>4</span>  <span class='chapter-title'>LLMs: Using llama.clj</span>"
+    ]
+  },
+  {
+    "objectID": "llamppl.cache.html",
+    "href": "llamppl.cache.html",
+    "title": "5  Caching model state",
+    "section": "",
+    "text": "5.1 A storage space\n;; Let us create a space to store a few model states. For now, the number of slots we use is hardcoded, fitting our JVM heap space.\nAs an example, let us try the following: * Use our model context to compute the next word for a piece text. * Store the model state. * Use are model with another text. * Retrieve the states we strored. * Check the next word again - as it the same as the one in the beginning?",
+    "crumbs": [
+      "<span class='chapter-number'>5</span>  <span class='chapter-title'>Caching model state</span>"
+    ]
+  },
+  {
+    "objectID": "llamppl.cache.html#a-storage-space",
+    "href": "llamppl.cache.html#a-storage-space",
+    "title": "5  Caching model state",
+    "section": "",
+    "text": "(def n-states 70)\n\n\n(defonce states-storage\n  (vec (repeatedly\n        n-states\n        #(byte-array llms/state-size))))\n\n\n(delay\n  (-&gt;&gt; states-storage\n       (map count)\n       frequencies))\n\n\n{270726188 70}\n\n\n\n(delay\n  (let [llama-ctx (llms/new-llama-ctx)\n        get-next-word (fn [llama-ctx]\n                        (-&gt; llama-ctx\n                            llama/get-logits\n                            argops/argmax\n                            vector\n                            llms/untokenize))\n        ;; Compute the word (recall that llama updates are mutating the context).\n        word-at-storage (-&gt; llama-ctx\n                            (llama/llama-update \"How much wood would a\")\n                            get-next-word)\n        ;; Store the model state\n        _ (-&gt; llama-ctx\n              (raw/llama_copy_state_data (states-storage 0)))\n        ;; Update the model with another text, getting other words.\n        another-word (-&gt; llama-ctx\n                         (llama/llama-update \"How are you\")\n                         get-next-word)\n        ;; Retrieve the model state we stored earlier.\n        _ (-&gt; llama-ctx\n              (raw/llama_set_state_data (states-storage 0)))\n        ;; Compute the next word again\n        word-after-retrieval (-&gt; llama-ctx\n                                 get-next-word)]\n    {:word-at-storage word-at-storage\n     :another-word another-word\n     :word-after-retrieval word-after-retrieval}))\n\n\n{:word-at-storage \" wood\",\n :another-word \"?\",\n :word-after-retrieval \" wood\"}",
+    "crumbs": [
+      "<span class='chapter-number'>5</span>  <span class='chapter-title'>Caching model state</span>"
+    ]
+  },
+  {
+    "objectID": "llamppl.cache.html#fifo-cache",
+    "href": "llamppl.cache.html#fifo-cache",
+    "title": "5  Caching model state",
+    "section": "5.2 FIFO cache",
+    "text": "5.2 FIFO cache\nWe will manage a basic FIFO cache on top of this storage.\nIts API tries to be similar to the clojure.cache API, with some differences.\nTODO: Document the cache API better.\n\n(defn new-fifo-cache []\n  {:id-&gt;idx {}\n   :idx-&gt;id {}\n   :current-idx 0})\n\n\n(defn lookup-or-miss!-impl [*fifo-cache id mem-cpy-fn]\n  (let [{:keys [id-&gt;idx]} @*fifo-cache]\n    (or (some-&gt; id\n                id-&gt;idx\n                states-storage)\n        (-&gt; *fifo-cache\n            (swap! (fn [fifo-cache]\n                     (let [updated-fifo-cache\n                           (as-&gt; fifo-cache fc\n                             (update fc :current-idx\n                                     (fn [idx] (-&gt; idx inc (rem n-states))))\n                             (update fc :id-&gt;idx dissoc ((:idx-&gt;id fc)\n                                                         (:current-idx fc)))\n                             (update fc :id-&gt;idx assoc id (:current-idx fc))\n                             (update fc :idx-&gt;id assoc (:current-idx fc) id))]\n                       (-&gt; updated-fifo-cache\n                           :current-idx\n                           states-storage\n                           mem-cpy-fn)\n                       updated-fifo-cache)))\n            :current-idx\n            states-storage))))\n\n\n(def lookup-or-miss!\n  (let [*id (atom 0)]\n    (fn [{:keys [state-id\n                 llama-ctx-fn\n                 *cache]}]\n      (let [id (or state-id (swap! *id inc))]\n        {:state-id id\n         :state-data (lookup-or-miss!-impl\n                      *cache\n                      id\n                      (fn [mem]\n                        (raw/llama_copy_state_data\n                         (llama-ctx-fn)\n                         mem)))}))))\n\n\n(defn has? [*fifo-cache id]\n  (-&gt; @*fifo-cache\n      :id-&gt;idx\n      (contains? id)))\n\n\n(defn lookup [*fifo-cache id]\n  (-&gt; @*fifo-cache\n      :id-&gt;idx\n      (get id)\n      states-storage))\n\nAs an example, let us try using this cache with a scenario similar to the one we tried earlier.\n\n(delay\n  (let [llama-ctx (llms/new-llama-ctx)\n        get-next-word (fn [llama-ctx]\n                        (-&gt; llama-ctx\n                            llama/get-logits\n                            argops/argmax\n                            vector\n                            llms/untokenize))\n        *cache (atom (new-fifo-cache))\n        ;; Use the cache a bit, storing a few states.\n        _ (dotimes [i 3]\n            (lookup-or-miss!\n             {:*cache *cache\n              :llama-ctx-fn #(llama/llama-update\n                              llama-ctx\n                              \"How are you\")}))\n        ;; Use the cache for a text we care about,\n        ;; keeping the `state-id` for future reference.\n        ;; We also keep the cached `state-data` itself,\n        ;; for our testing.\n        {:keys [state-id\n                state-data]} (lookup-or-miss!\n                              {:*cache *cache\n                               :llama-ctx-fn #(llama/llama-update\n                                               llama-ctx\n                                               \"How much wood would a\")})\n        ;; Compute the next word for the text we used.\n        word-at-storage (get-next-word llama-ctx)\n        ;; Keep updating the model state and using the cache.\n        _ (dotimes [i 3]\n            (lookup-or-miss!\n             {:*cache *cache\n              :llama-ctx-fn #(llama/llama-update\n                              llama-ctx\n                              \"How are you\")}))\n        ;; Compute the next word, which should be another word.\n        another-word (get-next-word llama-ctx)\n        ;; Retrieve the model state from the cache\n        ;; using the `state-id` we remembered.\n        retrieved-state-data (lookup *cache state-id)\n        ;; Used the retrived state for the model state:\n        _ (-&gt; llama-ctx\n              (raw/llama_set_state_data\n               retrieved-state-data))\n        ;; Compate the retrieved state with the state we kept earlier.\n        states-comparison (java.util.Arrays/equals\n                           ^bytes state-data\n                           ^bytes retrieved-state-data)\n        ;; Copmute the next word again,\n        ;; expecting to get the same the same one we got earlier.\n        word-after-retrieval (get-next-word llama-ctx)]\n    {:word-at-storage word-at-storage\n     :another-word another-word\n     :states-comparison states-comparison\n     :word-after-retrieval word-after-retrieval}))\n\n\n{:word-at-storage \" wood\",\n :another-word \"How\",\n :states-comparison true,\n :word-after-retrieval \" wood\"}\n\n\nsource: notebooks/llamppl/cache.clj",
+    "crumbs": [
+      "<span class='chapter-number'>5</span>  <span class='chapter-title'>Caching model state</span>"
     ]
   }
 ]
