@@ -5,9 +5,9 @@
              :base-source-path "notebooks"
              :source-path ["index.clj"
                            "setup.clj"
-                           "utils.clj"
-                           "llms.clj"
-                           "cache.clj"]
+                           "llamppl/utils.clj"
+                           "llamppl/llms.clj"
+                           "llamppl/cache.clj"]
              :base-target-path "docs"
              :book {:title "LLaMPPL.clj"}
              :clean-up-target-dir true})

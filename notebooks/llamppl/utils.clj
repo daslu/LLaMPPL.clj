@@ -1,4 +1,4 @@
-(ns utils)
+(ns llamppl.utils)
 
 ;; # A few utility functions
 

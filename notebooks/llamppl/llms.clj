@@ -1,4 +1,4 @@
-(ns llms
+(ns llamppl.llms
   (:require [com.phronemophobic.llama :as llama]
             [com.phronemophobic.llama.raw :as raw]
             [tech.v3.datatype.argops :as argops]
