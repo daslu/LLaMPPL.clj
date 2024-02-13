@@ -1,4 +1,4 @@
-(ns using-llama-clj
+(ns llms
   (:require [tech.v3.datatype :as dtype]
             [com.phronemophobic.llama :as llama]
             [com.phronemophobic.llama.raw :as raw]

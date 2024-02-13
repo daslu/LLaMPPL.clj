@@ -8,5 +8,25 @@
     "crumbs": [
       "<span class='chapter-number'>1</span>  <span class='chapter-title'>Preface</span>"
     ]
+  },
+  {
+    "objectID": "utils.html",
+    "href": "utils.html",
+    "title": "2  A few utility functions",
+    "section": "",
+    "text": "(ns utils)\n\n\n(defn now []\n  (java.util.Date.))\n\n\nsource: notebooks/utils.clj",
+    "crumbs": [
+      "<span class='chapter-number'>2</span>  <span class='chapter-title'>A few utility functions</span>"
+    ]
+  },
+  {
+    "objectID": "llms.html",
+    "href": "llms.html",
+    "title": "3  LLMs: Using llama.clj",
+    "section": "",
+    "text": "(ns llms\n  (:require [tech.v3.datatype :as dtype]\n            [com.phronemophobic.llama :as llama]\n            [com.phronemophobic.llama.raw :as raw]\n            [com.phronemophobic.llama.util :as llutil]\n            [tech.v3.datatype.argops :as argops]\n            [clojure.math :as math]\n            [scicloj.kindly.v4.kind :as kind]\n            [scicloj.kindly.v4.api :as kindly]\n            [scicloj.noj.v1.vis.hanami :as hanami]\n            [aerial.hanami.templates :as ht]\n            [tablecloth.api :as tc]\n            [clojure.string :as str]\n            [clojure.walk :as walk]\n            [tech.v3.datatype.functional :as fun]))\n\n\n(def md\n  (comp kindly/hide-code kind/md))\n\n\nsource: notebooks/llms.clj",
+    "crumbs": [
+      "<span class='chapter-number'>3</span>  <span class='chapter-title'>LLMs: Using llama.clj</span>"
+    ]
   }
 ]

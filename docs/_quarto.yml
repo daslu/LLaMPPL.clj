@@ -4,4 +4,4 @@ format:
 project: {type: book}
 book:
   title: LLaMPPL.clj
-  chapters: [index.qmd]
+  chapters: [index.qmd, utils.qmd, llms.qmd]
