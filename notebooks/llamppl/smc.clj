@@ -288,13 +288,9 @@ of the prefix \"The Fed say\" using only short words (5 letters most).")
                :max-text-length 30})
     (-> @*smc-state
         :particles
-        (tc/map-columns :finished
-                        [:x]
-                        llms/finished?)
-        (tc/map-columns :length
-                        [:x]
-                        count)
-        (tc/map-columns :x
-                        [:x]
-                        llms/untokenize)
+        (tc/map-columns :finished [:x] llms/finished?)
+        (tc/map-columns :length [:x] count)
+        (tc/map-columns :text [:x] llms/untokenize)
+        (tc/drop-columns [:x])
+        (tc/set-dataset-name "texts")
         (tech.v3.dataset.print/print-range :all))))
