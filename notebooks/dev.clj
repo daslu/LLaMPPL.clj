@@ -7,7 +7,8 @@
                            "setup.clj"
                            "llamppl/utils.clj"
                            "llamppl/llms.clj"
-                           "llamppl/cache.clj"]
+                           "llamppl/cache.clj"
+                           "llamppl/smc.clj"]
              :base-target-path "docs"
              :book {:title "LLaMPPL.clj"}
              :clean-up-target-dir true})
