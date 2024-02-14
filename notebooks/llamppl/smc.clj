@@ -41,7 +41,7 @@ for the Markov kernel $M$ and the potential function $G$.
 For now, we are not using the most efficient choice of them.
 
 ### The Markov kernel
-We define M as a sampling step
+We define $M$ as a sampling step
 (which is the way we use it algorithmically).
 ")
 
@@ -69,46 +69,43 @@ We define M as a sampling step
      (trie/visualize-trie @*context)]))
 
 
-(delay
-  (let [*context (atom (trie/new-context {:seed 1}))]
-    [(->> #(->> "How much wood"
-                llms/tokenize
-                (iterate (partial M-step *context))
-                (take 40)
-                last
-                llms/untokenize)
-          (repeatedly 2)
-          vec)
-     (trie/visualize-trie @*context)]))
+(md "### The potential function
 
-(delay
-  (let [*context (atom (trie/new-context {:seed 1}))]
-    [(->> (fn []
-            [(->> "The Fed says"
-                  llms/tokenize
-                  (iterate (partial M-step *context))
-                  (take 20)
-                  (map (juxt llms/finished?
-                             llms/untokenize))
-                  (map-indexed vector)
-                  vec)
-             (trie/visualize-trie @*context)])
-          (repeatedly 10)
-          vec)]))
+In our current implementation,
+the potential function $G$ is a simple representation
+of our constraint: requiring only short words.
+The maximal number of letters is a parameter, `max-n-letters`.")
 
-;; ### The potential function
-
-(defn G [threshold current-tokens]
+(defn G [max-n-letters current-tokens]
   (if (-> current-tokens
           llms/untokenize
           (str/split  #" ")
-          (->> (every? #(-> % count (<= threshold)))))
+          (->> (every? #(-> % count (<= max-n-letters)))))
     1 0))
 
+(md "For example, let us create a random sequence of tokens
+and check whether it satisfies $G$
+with different values of `max-n-letters`.")
 
-(defn normalize [ws]
-  (fun// ws
-         (fun/sum ws)))
+(delay
+  (let [*context (atom (trie/new-context {:seed 1}))
+        tokens (->> "How much wood"
+                    llms/tokenize
+                    (iterate (partial M-step *context))
+                    (take 5)
+                    last)]
+    {:text (llms/untokenize tokens)
+     :G5 (G 5 tokens)
+     :G9 (G 9 tokens)}))
+
+(md "## SMC implementation
+
+Here we are implementing the Sequential Monte Carlo Transformer Steering algorithm,
+Algorithm 1 of the paper.
+
+TODO: Explain this part better.
+
+An auxiliary function to find the $c*$:")
 
 (defn find-c [weights N]
   (prn [:weights weights
@@ -133,20 +130,13 @@ We define M as a sampling step
                    new-A-val
                    (inc i))))))))
 
+(md "For example:")
+
 (delay
   (find-c [0.1 0.2] 10))
 
-(delay
-  (let [*context (atom (trie/new-context {:seed 1}))]
-    (->> "Please complete the sentence in ten words. Clojure is a"
-         llms/tokenize
-         (M-step *context)
-         (M-step *context)
-         (M-step *context)
-         ((juxt llms/untokenize
-                (partial G 9)
-                (partial G 12))))))
-
+(md "The SMC loop will manage a stateful atom `*smc-state`.
+This allows us to conveniently inspect the process from another thread while it is running.")
 
 (defn new-smc-state [] {:stop false
                         :particles []})
@@ -155,7 +145,7 @@ We define M as a sampling step
   [*smc-state
    {:keys [cache-threshold
            seed
-           max-token-length
+           max-n-letters
            N
            K
            base-text
@@ -172,50 +162,53 @@ We define M as a sampling step
       (let [particles (:particles @*smc-state)
             finished (->> particles
                           :x
-                          (map (fn [x]
-                                 (or (llms/finished? x)
-                                     (-> x count (>= max-text-length))))))]
+                          (map llms/finished?))
+            done (fun/or finished
+                         (->> particles
+                              :x
+                              (map #(-> % count (>= max-text-length)))))]
         (->> finished
              frequencies
              (vector :finished-freqs)
              prn)
         (if (or (:stop @*smc-state)
-                (every? true? finished))
+                (every? true? done))
           {:particles particles
            :Z (-> particles :w fun/mean)}
           ;; else
-          (let [K (->> finished
+          (let [K (->> done
                        (map (fn [f]
                               (if f 1 K))))
                 N-prime (fun/sum K)
                 new-particles (-> particles
                                   (tc/add-columns {:K K
-                                                   :finished finished})
+                                                   :done done})
                                   (tc/rows :as-maps)
-                                  (->> (map (fn [{:keys [x w finished K]
-                                                  :as row}]
-                                              (if finished
-                                                (tc/dataset {:x [x]
-                                                             :w [(* w N-prime (/ N))]
-                                                             :time [(:time row)]
-                                                             :gen [(:gen row)]})
-                                                ;; else
-                                                (-> (range K)
-                                                    (->> (map (fn [k]
-                                                                (-> {:x (M-step *context x)
-                                                                     :time (utils/now)
-                                                                     :gen gen}))))
-                                                    tc/dataset
-                                                    (tc/map-columns
-                                                     :w
-                                                     [:x]
-                                                     (fn [x]
-                                                       (* (/ N-prime
-                                                             (* K N))
-                                                          w
-                                                          (G max-token-length x))))))))
+                                  (->> (map
+                                        (fn [{:keys [x w done K]
+                                              :as row}]
+                                          (if done
+                                            (tc/dataset {:x [x]
+                                                         :w [(* w N-prime (/ N))]
+                                                         :time [(:time row)]
+                                                         :gen [(:gen row)]})
+                                            ;; else
+                                            (-> (range K)
+                                                (->> (map (fn [k]
+                                                            (-> {:x (M-step *context x)
+                                                                 :time (utils/now)
+                                                                 :gen gen}))))
+                                                tc/dataset
+                                                (tc/map-columns
+                                                 :w
+                                                 [:x]
+                                                 (fn [x]
+                                                   (* (/ N-prime
+                                                         (* K N))
+                                                      w
+                                                      (G max-n-letters x))))))))
                                        (apply tc/concat))
-                                  (tc/add-column :w #(-> % :w normalize))
+                                  (tc/add-column :w #(-> % :w utils/normalize))
                                   ((fn [{:keys [x w time gen]
                                          :as new-particles}]
                                      (prn [:new-particles new-particles])
@@ -279,26 +272,29 @@ We define M as a sampling step
             (recur (inc gen))))))))
 
 
-#_(delay
-    (let [*smc-state (atom (new-smc-state))]
-      (run-smc! *smc-state
-                {:cache-threshold 30
-                 :seed 1
-                 :base-text "The Fed says"
-                 :max-token-length 5
-                 :N 15
-                 :K 3
-                 :initial-N 5
-                 :max-text-length 10})
-      (-> @*smc-state
-          :particles
-          (tc/map-columns :finished
-                          [:x]
-                          llms/finished?)
-          (tc/map-columns :length
-                          [:x]
-                          count)
-          (tc/map-columns :x
-                          [:x]
-                          llms/untokenize)
-          (tech.v3.dataset.print/print-range :all))))
+(md "Let us run an example: funding random continuations
+of the prefix \"The Fed say\" using only short words (5 letters most).")
+
+(delay
+  (let [*smc-state (atom (new-smc-state))]
+    (run-smc! *smc-state
+              {:cache-threshold 30
+               :seed 1
+               :base-text "The Fed says"
+               :max-n-letters 5
+               :N 15
+               :K 3
+               :initial-N 5
+               :max-text-length 30})
+    (-> @*smc-state
+        :particles
+        (tc/map-columns :finished
+                        [:x]
+                        llms/finished?)
+        (tc/map-columns :length
+                        [:x]
+                        count)
+        (tc/map-columns :x
+                        [:x]
+                        llms/untokenize)
+        (tech.v3.dataset.print/print-range :all))))
