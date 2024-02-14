@@ -265,6 +265,25 @@ but also ask for the model logits for the next token.")
                                   llms/token->str)])))
      (visualize-trie @*context)]))
 
+(md "Here is a bigger example.
+Note that some nodes are no longer in the cache
+and are coloured differently.
+([Source](https://en.wikipedia.org/wiki/Groundhog))")
+
+(delay
+  (let [*context (atom (new-context))]
+    [(->> ["The groundhog (Marmota monax), also known as the woodchuck, is a rodent of the family Sciuridae, belonging to the group of large ground squirrels known as marmots. The groundhog is a lowland creature of North America; it is found through much of the Eastern United States, across Canada and into Alaska. It was first scientifically described by Carl Linnaeus in 1758."
+           "The groundhog is also referred to as a chuck, wood-shock, groundpig, whistlepig, whistler, thickwood badger, Canada marmot, monax, moonack, weenusk, red monk, land beaver, and, among French Canadians in eastern Canada, siffleux. The name \"thickwood badger\" was given in the Northwest to distinguish the animal from the prairie badger. Monax (Móonack) is an Algonquian name of the woodchuck, which means \"digger\" (cf. Lenape monachgeu). Young groundhogs may be called chucklings. "
+           "The groundhog did visit me yesterday."
+           "The groundhog is also referred to as Margaret. At least that is how they call her in our neighbourhood."]
+          (mapv (fn [text]
+                  [text '--> (->> text
+                                  llms/tokenize
+                                  (logits! *context)
+                                  argops/argmax
+                                  llms/token->str)])))
+     (visualize-trie @*context)]))
+
 
 (md "## Sampling random tokens
 
