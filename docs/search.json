@@ -94,7 +94,7 @@
     "href": "llamppl.cache.html",
     "title": "5  Caching model state",
     "section": "",
-    "text": "5.1 A storage space\n;; Let us create a space to store a few model states. For now, the number of slots we use is hardcoded, fitting our JVM heap space.\nAs an example, let us try the following: * Use our model context to compute the next word for a piece text. * Store the model state. * Use are model with another text. * Retrieve the states we strored. * Check the next word again - as it the same as the one in the beginning?",
+    "text": "5.1 A storage space\nLet us create a space to store a few model states. For now, the number of slots we use is hardcoded, fitting our JVM heap space.\nAs an example, let us try the following: * Use our model context to compute the next word for a piece text. * Store the model state. * Use are model with another text. * Retrieve the states we strored. * Check the next word again - as it the same as the one in the beginning?",
     "crumbs": [
       "<span class='chapter-number'>5</span>  <span class='chapter-title'>Caching model state</span>"
     ]

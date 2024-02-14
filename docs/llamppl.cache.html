@@ -230,11 +230,11 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <span id="cb2-3"><a href="#cb2-3" aria-hidden="true" tabindex="-1"></a>  (<span class="kw">comp</span> kindly/hide-code kind/md))</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </div>
 <p>We will rely on the model’s internal <a href="https://www.dipkumar.dev/becoming-the-unbeatable/posts/gpt-kvcache/">KV-caching</a>. Also, following the LLaMPPL <a href="https://arxiv.org/abs/2306.03081">paper</a> (Section 3, Subsection “Shared Transformer cache”), we will implement a trie cache of model states.</p>
-<p>Since the model states are expensive, we cannot store an unlimited number of model states. many of them, so we will need a basic storage space for a few of them.</p>
+<p>Since the model states are expensive, we cannot store an unlimited number of model states, so we will need a basic storage space for a few of them.</p>
 <p>To avoid garbage collection, we will allocate our memory slots space once, and manage them as a simple FIFO storage.</p>
 <section id="a-storage-space" class="level2" data-number="5.1">
 <h2 data-number="5.1" class="anchored" data-anchor-id="a-storage-space"><span class="header-section-number">5.1</span> A storage space</h2>
-<p>;; Let us create a space to store a few model states. For now, the number of slots we use is hardcoded, fitting our JVM heap space.</p>
+<p>Let us create a space to store a few model states. For now, the number of slots we use is hardcoded, fitting our JVM heap space.</p>
 <div class="sourceClojure">
 <div class="sourceCode" id="cb3"><pre class="sourceCode clojure code-with-copy"><code class="sourceCode clojure"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a>(<span class="bu">def</span><span class="fu"> n-states </span><span class="dv">70</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </div>
