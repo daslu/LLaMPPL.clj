@@ -144,10 +144,10 @@ We define cached evaluation as a recursive transformation of a context map. Note
       :trie {}
       :*cache (atom (cache/new-fifo-cache))})))
 
-(md "Given an atom holding a contex map, we may update it with a given cached evaluation.
+(md "Given an atom holding a context map, we may update it with a given cached evaluation.
 Note that we do not keep all the fields of the context map.
 Some of them (e.g., `:sub-trie`) were used for the recursive evaluation
-and need to be discarded (using `select-keys`).")
+and need to be discarded (using `select-keys`) to avoid affecting the next evaluation.")
 
 (defn cached-eval! [*context tokens]
   (let [context (-> @*context
@@ -165,7 +165,8 @@ but are also interested in the model logits for the next token.")
       (cached-eval! tokens)
       :logits))
 
-(md "For example:")
+(md "For example, let us pick the tokens with highest logits
+(that is, the most probable tokens) following a few texts:")
 
 (delay
   (let [*context (atom (new-context))]
@@ -177,7 +178,8 @@ but are also interested in the model logits for the next token.")
                                  llm/tokenize
                                  (logits! *context)
                                  argops/argmax
-                                 llm/token->str)])))))
+                                 llm/token->str)]))
+         kind/fragment)))
 
 (md "## Visualising the trie")
 
@@ -250,39 +252,41 @@ but are also interested in the model logits for the next token.")
                      :target-arrow-shape "triangle"}}]
       :layout {:name "cose"}})))
 
-(md "For example, let us see the trie following a few token sequences.")
+(md "For example, let us run a few \"next token\" tasks as above,
+but this time, also visualize the reulting trie.")
 
 (delay
   (let [*context (atom (new-context))]
-    [(->> ["How are"
-           "How much wood would a"
-           "How much wood could a"]
-          (mapv (fn [text]
-                  [text '--> (->> text
-                                  llm/tokenize
-                                  (logits! *context)
-                                  argops/argmax
-                                  llm/token->str)])))
-     (visualize-trie @*context)]))
+    (kind/fragment
+     [(->> ["How are"
+            "How much wood would a"
+            "How much wood could a"]
+           (mapv (fn [text]
+                   [text '--> (->> text
+                                   llm/tokenize
+                                   (logits! *context)
+                                   argops/argmax
+                                   llm/token->str)])))
+      (visualize-trie @*context)])))
 
 (md "Here is a bigger example.
 Note that some nodes are no longer in the cache
-and are coloured differently.
+and are thus coloured differently.
 ([Source](https://en.wikipedia.org/wiki/Groundhog))")
 
 (delay
   (let [*context (atom (new-context))]
-    [(->> ["The groundhog (Marmota monax), also known as the woodchuck, is a rodent of the family Sciuridae, belonging to the group of large ground squirrels known as marmots. The groundhog is a lowland creature of North America; it is found through much of the Eastern United States, across Canada and into Alaska. It was first scientifically described by Carl Linnaeus in 1758."
-           "The groundhog is also referred to as a chuck, wood-shock, groundpig, whistlepig, whistler, thickwood badger, Canada marmot, monax, moonack, weenusk, red monk, land beaver, and, among French Canadians in eastern Canada, siffleux. The name \"thickwood badger\" was given in the Northwest to distinguish the animal from the prairie badger. Monax (Móonack) is an Algonquian name of the woodchuck, which means \"digger\" (cf. Lenape monachgeu). Young groundhogs may be called chucklings. "
-           "The groundhog did visit me yesterday."
-           "The groundhog is also referred to as Margaret. At least that is how they call her in our neighbourhood."]
-          (mapv (fn [text]
-                  [text '--> (->> text
-                                  llm/tokenize
-                                  (logits! *context)
-                                  argops/argmax
-                                  llm/token->str)])))
-     (visualize-trie @*context)]))
+    (->> ["The groundhog (Marmota monax), also known as the woodchuck, is a rodent of the family Sciuridae, belonging to the group of large ground squirrels known as marmots. The groundhog is a lowland creature of North America; it is found through much of the Eastern United States, across Canada and into Alaska. It was first scientifically described by Carl Linnaeus in 1758."
+          "The groundhog is also referred to as a chuck, wood-shock, groundpig, whistlepig, whistler, thickwood badger, Canada marmot, monax, moonack, weenusk, red monk, land beaver, and, among French Canadians in eastern Canada, siffleux. The name \"thickwood badger\" was given in the Northwest to distinguish the animal from the prairie badger. Monax (Móonack) is an Algonquian name of the woodchuck, which means \"digger\" (cf. Lenape monachgeu). Young groundhogs may be called chucklings. "
+          "The groundhog did visit me yesterday."
+          "The groundhog is also referred to as Margaret. At least that is how they call her in our neighbourhood."]
+         (run! (fn [text]
+                 (->> text
+                      llm/tokenize
+                      (logits! *context)
+                      argops/argmax
+                      llm/token->str))))
+    (visualize-trie @*context)))
 
 
 (md "## Sampling random tokens
