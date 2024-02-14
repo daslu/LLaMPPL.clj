@@ -17,10 +17,9 @@ This repo explores the [LLaMPPL](https://github.com/probcomp/LLaMPPL) underlying
 
 See [Sequential Monte Carlo Steering of Large Language Models
 using Probabilistic Programs](https://arxiv.org/abs/2306.03081)
-by Alexander K. Lew, Tan Zhi-Xuan, Gabriel Grand, Vikash K. Mansinghka
-(see Figure 1 and Subsection 2.2).
+by Alexander K. Lew, Tan Zhi-Xuan, Gabriel Grand, Vikash K. Mansinghka.
 
-At the moment, we demonstrate implementing the Sequential Monte Carlo algoritm on a specific case, the Hard Constraints case generating texts with only short words with a certain choice of M (the Markove kernel) and G (the potential function), not the most efficient one.
+At the moment, we demonstrate implementing the Sequential Monte Carlo algoritm on a specific case, the Hard Constraints case (See Figure 1 and Subection 2.2 of the paper). Specifically, we implement the \"only short words\" constraint using a certain choice of $M$ (the Markove kernel) and $G$ (the potential function) (but not the most efficient choice for that case).
 
 The main effort so far has been in tackling some of the caching challenges.
 
