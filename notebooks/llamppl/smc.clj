@@ -28,16 +28,16 @@ following the paper.
 ## A probabilistic model
 
 The LLaMPPL paper defines a probabilistic model using
-an initial state $s_$,
+an initial state $s_0$,
 a Markove kernel $M$,
 and a potential function $G$.
 
-Here we are implmenting a specific model
+Here we implmenti a specific model
 of the 'hard constraints' type:
 generating texts that use only short words.
 
 Note that the paper offers more than one option
-for the Markov kernel $M$ and the potential function $G$.
+for the Markov kernel $M$ and the potential function $G$ for that case.
 For now, we are not using the most efficient choice of them.
 
 ### The Markov kernel
@@ -58,15 +58,16 @@ We define $M$ as a sampling step
 
 (delay
   (let [*context (atom (trie/new-context {:seed 1}))]
-    [(->> #(->> "How much wood"
-                llm/tokenize
-                (iterate (partial M-step *context))
-                (take 5)
-                last
-                llm/untokenize)
-          (repeatedly 5)
-          vec)
-     (trie/visualize-trie @*context)]))
+    (kind/fragment
+     [(->> #(->> "How much wood"
+                 llm/tokenize
+                 (iterate (partial M-step *context))
+                 (take 5)
+                 last
+                 llm/untokenize)
+           (repeatedly 5)
+           vec)
+      (trie/visualize-trie @*context)])))
 
 
 (md "### The potential function
@@ -100,12 +101,12 @@ with different values of `max-n-letters`.")
 
 (md "## SMC implementation
 
-Here we are implementing the Sequential Monte Carlo Transformer Steering algorithm,
+Here we implement the Sequential Monte Carlo Transformer Steering algorithm,
 Algorithm 1 of the paper.
 
 TODO: Explain this part better.
 
-An auxiliary function to find the $c*$:")
+An auxiliary function to find $c*$ (see the algorithm):")
 
 (defn find-c [weights N]
   (prn [:weights weights
@@ -282,10 +283,10 @@ of the prefix \"The Fed say\" using only short words (5 letters most).")
                :seed 1
                :base-text "The Fed says"
                :max-n-letters 5
-               :N 15
+               :N 10
                :K 3
                :initial-N 5
-               :max-text-length 30})
+               :max-text-length 15})
     (-> @*smc-state
         :particles
         (tc/map-columns :finished [:x] llm/finished?)
@@ -293,4 +294,5 @@ of the prefix \"The Fed say\" using only short words (5 letters most).")
         (tc/map-columns :text [:x] llm/untokenize)
         (tc/drop-columns [:x])
         (tc/set-dataset-name "texts")
-        (tech.v3.dataset.print/print-range :all))))
+        (tech.v3.dataset.print/print-range :all)
+        kind/table)))
