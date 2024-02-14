@@ -6,7 +6,7 @@
             [tech.v3.datatype.argops :as argops]
             [clojure.walk :as walk]
             [llamppl.utils :as utils]
-            [llamppl.llms :as llms]
+            [llamppl.llm :as llm]
             [llamppl.cache :as cache]))
 
 ^:kind/hide-code
@@ -38,7 +38,7 @@ We define the cached evaluation as a recursive transformation of a context map. 
   (let [path->text (fn [path]
                      (->> path
                           (filter number?)
-                          llms/untokenize))]
+                          llm/untokenize))]
     (if (empty? remaining-tokens)
       ;; done - return this context
       (do
@@ -79,7 +79,7 @@ We define the cached evaluation as a recursive transformation of a context map. 
                                     (do
                                       #_(prn [:set-from-base])
                                       (raw/llama_set_state_data llama-ctx
-                                                                llms/base-state-data))
+                                                                llm/base-state-data))
                                     ;; When the last evaluation does not fit
                                     ;; out place in the trie,
                                     ;; bring the reletant state from cache.
@@ -100,7 +100,7 @@ We define the cached evaluation as a recursive transformation of a context map. 
                                   (prn [:eval
                                         (path->text path)
                                         '-->
-                                        (llms/token->str token)])
+                                        (llm/token->str token)])
                                   (time
                                    (llama/llama-update llama-ctx
                                                        token
@@ -134,7 +134,7 @@ We define the cached evaluation as a recursive transformation of a context map. 
   ([{:keys [seed]
      :or {seed 12345}}]
    (System/gc)
-   (let [llama-ctx (llms/new-llama-ctx)
+   (let [llama-ctx (llm/new-llama-ctx)
          samplef (llama/init-mirostat-v2-sampler
                   llama-ctx)]
      (prn [:seed seed])
@@ -174,10 +174,10 @@ but also ask for the model logits for the next token.")
           "How much wood could a"]
          (mapv (fn [text]
                  [text '--> (->> text
-                                 llms/tokenize
+                                 llm/tokenize
                                  (logits! *context)
                                  argops/argmax
-                                 llms/token->str)])))))
+                                 llm/token->str)])))))
 
 (md "## Visualising the trie")
 
@@ -204,7 +204,7 @@ but also ask for the model logits for the next token.")
                                              conj
                                              {:data {:id node-id
                                                      :token token
-                                                     :word (llms/token->str token)
+                                                     :word (llm/token->str token)
                                                      :background (if (->> child
                                                                           :llama-state-id
                                                                           (cache/has? *cache))
@@ -259,10 +259,10 @@ but also ask for the model logits for the next token.")
            "How much wood could a"]
           (mapv (fn [text]
                   [text '--> (->> text
-                                  llms/tokenize
+                                  llm/tokenize
                                   (logits! *context)
                                   argops/argmax
-                                  llms/token->str)])))
+                                  llm/token->str)])))
      (visualize-trie @*context)]))
 
 (md "Here is a bigger example.
@@ -278,10 +278,10 @@ and are coloured differently.
            "The groundhog is also referred to as Margaret. At least that is how they call her in our neighbourhood."]
           (mapv (fn [text]
                   [text '--> (->> text
-                                  llms/tokenize
+                                  llm/tokenize
                                   (logits! *context)
                                   argops/argmax
-                                  llms/token->str)])))
+                                  llm/token->str)])))
      (visualize-trie @*context)]))
 
 
@@ -302,12 +302,12 @@ For example:")
          (mapv
           (fn [text]
             (let [logits (->> text
-                              llms/tokenize
+                              llm/tokenize
                               (logits! *context))]
               [text
                (->> (repeatedly
                      1000
-                     #(llms/token->str (samplef logits)))
+                     #(llm/token->str (samplef logits)))
                     frequencies)]))))))
 
 (md "For convenience, let us use this function to sample one token.
@@ -327,7 +327,7 @@ TODO: Handle seeds more carefully for reproducibility..")
 (delay
   (let [*context (atom (new-context))]
     (->> "How much wood would a"
-         llms/tokenize
+         llm/tokenize
          (logits! *context)
          (sample-once! *context)
-         llms/token->str)))
+         llm/token->str)))

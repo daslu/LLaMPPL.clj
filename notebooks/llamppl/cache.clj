@@ -4,7 +4,7 @@
             [scicloj.kindly.v4.kind :as kind]
             [scicloj.kindly.v4.api :as kindly]
             [tech.v3.datatype.argops :as argops]
-            [llamppl.llms :as llms]))
+            [llamppl.llm :as llm]))
 
 ^:kind/hide-code
 (def md
@@ -27,7 +27,7 @@ Let us create a space to store a few model states. For now, the number of slots 
 (defonce states-storage
   (vec (repeatedly
         n-states
-        #(byte-array llms/state-size))))
+        #(byte-array llm/state-size))))
 
 (delay
   (->> states-storage
@@ -42,12 +42,12 @@ Let us create a space to store a few model states. For now, the number of slots 
 * Check the next word again - as it the same as the one in the beginning?")
 
 (delay
-  (let [llama-ctx (llms/new-llama-ctx)
+  (let [llama-ctx (llm/new-llama-ctx)
         get-next-word (fn [llama-ctx]
                         (-> llama-ctx
                             llama/get-logits
                             argops/argmax
-                            llms/token->str))
+                            llm/token->str))
         ;; Compute the word (recall that llama updates are mutating the context).
         word-at-storage (-> llama-ctx
                             (llama/llama-update "How much wood would a")
@@ -136,12 +136,12 @@ TODO: Document the cache API better.")
 with a scenario similar to the one we tried earlier.")
 
 (delay
-  (let [llama-ctx (llms/new-llama-ctx)
+  (let [llama-ctx (llm/new-llama-ctx)
         get-next-word (fn [llama-ctx]
                         (-> llama-ctx
                             llama/get-logits
                             argops/argmax
-                            llms/token->str))
+                            llm/token->str))
         *cache (atom (new-fifo-cache))
         ;; Use the cache a bit, storing a few states.
         _ (dotimes [i 3]

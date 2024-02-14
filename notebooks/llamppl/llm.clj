@@ -1,4 +1,4 @@
-(ns llamppl.llms
+(ns llamppl.llm
   (:require [com.phronemophobic.llama :as llama]
             [com.phronemophobic.llama.raw :as raw]
             [com.phronemophobic.llama.util :as llutil]

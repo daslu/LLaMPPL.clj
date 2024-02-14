@@ -9,7 +9,7 @@
             [clojure.walk :as walk]
             [clojure.string :as str]
             [llamppl.utils :as utils]
-            [llamppl.llms :as llms]
+            [llamppl.llm :as llm]
             [llamppl.cache :as cache]
             [llamppl.trie :as trie]))
 
@@ -47,7 +47,7 @@ We define $M$ as a sampling step
 
 (defn M-step [*context
               previous-tokens]
-  (if (llms/finished? previous-tokens)
+  (if (llm/finished? previous-tokens)
     previous-tokens
     (->> previous-tokens
          (trie/logits! *context)
@@ -59,11 +59,11 @@ We define $M$ as a sampling step
 (delay
   (let [*context (atom (trie/new-context {:seed 1}))]
     [(->> #(->> "How much wood"
-                llms/tokenize
+                llm/tokenize
                 (iterate (partial M-step *context))
                 (take 5)
                 last
-                llms/untokenize)
+                llm/untokenize)
           (repeatedly 5)
           vec)
      (trie/visualize-trie @*context)]))
@@ -78,7 +78,7 @@ The maximal number of letters is a parameter, `max-n-letters`.")
 
 (defn G [max-n-letters current-tokens]
   (if (-> current-tokens
-          llms/untokenize
+          llm/untokenize
           (str/split  #" ")
           (->> (every? #(-> % count (<= max-n-letters)))))
     1 0))
@@ -90,11 +90,11 @@ with different values of `max-n-letters`.")
 (delay
   (let [*context (atom (trie/new-context {:seed 1}))
         tokens (->> "How much wood"
-                    llms/tokenize
+                    llm/tokenize
                     (iterate (partial M-step *context))
                     (take 5)
                     last)]
-    {:text (llms/untokenize tokens)
+    {:text (llm/untokenize tokens)
      :G5 (G 5 tokens)
      :G9 (G 9 tokens)}))
 
@@ -152,7 +152,7 @@ This allows us to conveniently inspect the process from another thread while it 
            initial-N
            max-text-length]}]
   (let [*context (atom (trie/new-context {:seed 1}))
-        s0 (llms/tokenize base-text)]
+        s0 (llm/tokenize base-text)]
     (swap! *smc-state
            assoc :particles  (tc/dataset {:x (repeat initial-N s0)
                                           :w 1
@@ -162,7 +162,7 @@ This allows us to conveniently inspect the process from another thread while it 
       (let [particles (:particles @*smc-state)
             finished (->> particles
                           :x
-                          (map llms/finished?))
+                          (map llm/finished?))
             done (fun/or finished
                          (->> particles
                               :x
@@ -288,9 +288,9 @@ of the prefix \"The Fed say\" using only short words (5 letters most).")
                :max-text-length 30})
     (-> @*smc-state
         :particles
-        (tc/map-columns :finished [:x] llms/finished?)
+        (tc/map-columns :finished [:x] llm/finished?)
         (tc/map-columns :length [:x] count)
-        (tc/map-columns :text [:x] llms/untokenize)
+        (tc/map-columns :text [:x] llm/untokenize)
         (tc/drop-columns [:x])
         (tc/set-dataset-name "texts")
         (tech.v3.dataset.print/print-range :all))))

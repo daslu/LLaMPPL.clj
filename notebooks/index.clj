@@ -30,7 +30,7 @@ starting with \"The Fed says\"
 and using only words of at most 5 letters.")
 
 
-(require '[llamppl.llms :as llms]
+(require '[llamppl.llm :as llm]
          '[llamppl.smc :as smc]
          '[tablecloth.api :as tc])
 
@@ -48,9 +48,9 @@ and using only words of at most 5 letters.")
                    :max-text-length 10})
     (-> @*smc-state
         :particles
-        (tc/map-columns :finished [:x] llms/finished?)
+        (tc/map-columns :finished [:x] llm/finished?)
         (tc/map-columns :length [:x] count)
-        (tc/map-columns :text [:x] llms/untokenize)
+        (tc/map-columns :text [:x] llm/untokenize)
         (tc/drop-columns [:x])
         (tc/set-dataset-name "texts")
         (tech.v3.dataset.print/print-range :all))))
