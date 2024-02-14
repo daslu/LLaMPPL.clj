@@ -47,8 +47,7 @@ Let us create a space to store a few model states. For now, the number of slots 
                         (-> llama-ctx
                             llama/get-logits
                             argops/argmax
-                            vector
-                            llms/untokenize))
+                            llms/token->str))
         ;; Compute the word (recall that llama updates are mutating the context).
         word-at-storage (-> llama-ctx
                             (llama/llama-update "How much wood would a")
@@ -142,8 +141,7 @@ with a scenario similar to the one we tried earlier.")
                         (-> llama-ctx
                             llama/get-logits
                             argops/argmax
-                            vector
-                            llms/untokenize))
+                            llms/token->str))
         *cache (atom (new-fifo-cache))
         ;; Use the cache a bit, storing a few states.
         _ (dotimes [i 3]
