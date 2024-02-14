@@ -143,7 +143,8 @@ This allows us to conveniently inspect the process from another thread while it 
                         :particles []})
 
 (defn run-smc!
-  [*smc-state
+  [*context
+   *smc-state
    {:keys [cache-threshold
            seed
            max-n-letters
@@ -152,8 +153,7 @@ This allows us to conveniently inspect the process from another thread while it 
            base-text
            initial-N
            max-text-length]}]
-  (let [*context (atom (trie/new-context {:seed 1}))
-        s0 (llm/tokenize base-text)]
+  (let [s0 (llm/tokenize base-text)]
     (swap! *smc-state
            assoc :particles  (tc/dataset {:x (repeat initial-N s0)
                                           :w 1
@@ -277,8 +277,10 @@ This allows us to conveniently inspect the process from another thread while it 
 of the prefix \"The Fed say\" using only short words (5 letters most).")
 
 (delay
-  (let [*smc-state (atom (new-smc-state))]
-    (run-smc! *smc-state
+  (let [*context (atom (trie/new-context {:seed 1}))
+        *smc-state (atom (new-smc-state))]
+    (run-smc! *context
+              *smc-state
               {:cache-threshold 30
                :seed 1
                :base-text "The Fed says"
@@ -287,12 +289,14 @@ of the prefix \"The Fed say\" using only short words (5 letters most).")
                :K 3
                :initial-N 5
                :max-text-length 15})
-    (-> @*smc-state
-        :particles
-        (tc/map-columns :finished [:x] llm/finished?)
-        (tc/map-columns :length [:x] count)
-        (tc/map-columns :text [:x] llm/untokenize)
-        (tc/drop-columns [:x])
-        (tc/set-dataset-name "texts")
-        (tech.v3.dataset.print/print-range :all)
-        kind/table)))
+    (kind/fragment
+     [(-> @*smc-state
+          :particles
+          (tc/map-columns :finished [:x] llm/finished?)
+          (tc/map-columns :length [:x] count)
+          (tc/map-columns :text [:x] llm/untokenize)
+          (tc/drop-columns [:x])
+          (tc/set-dataset-name "texts")
+          (tech.v3.dataset.print/print-range :all)
+          kind/table)
+      (trie/visualize-trie @*context)])))

@@ -2,6 +2,7 @@
 (ns index
   (:require [scicloj.kindly.v4.kind :as kind]
             [scicloj.kindly.v4.api :as kindly]
+            [llamppl.trie :as trie]
             [llamppl.smc :as smc]
             [tablecloth.api :as tc]))
 
@@ -35,8 +36,10 @@ and using only words of at most 5 letters.")
 
 
 (delay
-  (let [*smc-state (atom (smc/new-smc-state))]
-    (smc/run-smc! *smc-state
+  (let [*context (atom (trie/new-context {:seed 1}))
+        *smc-state (atom (smc/new-smc-state))]
+    (smc/run-smc! *context
+                  *smc-state
                   {:cache-threshold 30
                    :seed 1
                    :base-text "The Fed says"
@@ -45,11 +48,14 @@ and using only words of at most 5 letters.")
                    :K 3
                    :initial-N 5
                    :max-text-length 10})
-    (-> @*smc-state
-        :particles
-        (tc/map-columns :finished [:x] llm/finished?)
-        (tc/map-columns :length [:x] count)
-        (tc/map-columns :text [:x] llm/untokenize)
-        (tc/drop-columns [:x])
-        (tc/set-dataset-name "texts")
-        (tech.v3.dataset.print/print-range :all))))
+    (kind/fragment
+     [(-> @*smc-state
+          :particles
+          (tc/map-columns :finished [:x] llm/finished?)
+          (tc/map-columns :length [:x] count)
+          (tc/map-columns :text [:x] llm/untokenize)
+          (tc/drop-columns [:x])
+          (tc/set-dataset-name "texts")
+          (tech.v3.dataset.print/print-range :all)
+          kind/table)
+      (trie/visualize-trie @*context)])))
