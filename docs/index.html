@@ -103,6 +103,35 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 }</script>
 <link rel="icon" href="data:,">
 
+  <script src="https://polyfill.io/v3/polyfill.min.js?features=es6"></script>
+  <script src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-chtml-full.js" type="text/javascript"></script>
+
+<script type="text/javascript">
+const typesetMath = (el) => {
+  if (window.MathJax) {
+    // MathJax Typeset
+    window.MathJax.typeset([el]);
+  } else if (window.katex) {
+    // KaTeX Render
+    var mathElements = el.getElementsByClassName("math");
+    var macros = [];
+    for (var i = 0; i < mathElements.length; i++) {
+      var texText = mathElements[i].firstChild;
+      if (mathElements[i].tagName == "SPAN") {
+        window.katex.render(texText.data, mathElements[i], {
+          displayMode: mathElements[i].classList.contains('display'),
+          throwOnError: false,
+          macros: macros,
+          fleqn: false
+        });
+      }
+    }
+  }
+}
+window.Quarto = {
+  typesetMath
+};
+</script>
 
 </head>
 
@@ -229,8 +258,8 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <section id="preface" class="level1" data-number="1">
 <h1 data-number="1"><span class="header-section-number">1</span> Preface</h1>
 <p>This repo explores the <a href="https://github.com/probcomp/LLaMPPL">LLaMPPL</a> underlying algorithms from Clojure using <a href="https://github.com/phronmophobic/llama.clj">llama.clj</a>.</p>
-<p>See <a href="https://arxiv.org/abs/2306.03081">Sequential Monte Carlo Steering of Large Language Models using Probabilistic Programs</a> by Alexander K. Lew, Tan Zhi-Xuan, Gabriel Grand, Vikash K. Mansinghka (see Figure 1 and Subsection 2.2).</p>
-<p>At the moment, we demonstrate implementing the Sequential Monte Carlo algoritm on a specific case, the Hard Constraints case generating texts with only short words with a certain choice of M (the Markove kernel) and G (the potential function), not the most efficient one.</p>
+<p>See <a href="https://arxiv.org/abs/2306.03081">Sequential Monte Carlo Steering of Large Language Models using Probabilistic Programs</a> by Alexander K. Lew, Tan Zhi-Xuan, Gabriel Grand, Vikash K. Mansinghka.</p>
+<p>At the moment, we demonstrate implementing the Sequential Monte Carlo algorithm on a specific case, the Hard Constraints case (See Figure 1 and Subection 2.2 of the paper). Specifically, we implement the “only short words” constraint using a certain choice of <span class="math inline">\(M\)</span> (the Markove kernel) and <span class="math inline">\(G\)</span> (the potential function) (but not the most efficient choice for that case).</p>
 <p>The main effort so far has been in tackling some of the caching challenges.</p>
 <p>Our current bottom line is being able to generate a random population of texts (“particles” in SMC jargon) starting with “The Fed says” and using only words of at most 5 letters.</p>
 <div class="sourceClojure">
@@ -263,11 +292,11 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <table class="table">
 <colgroup>
 <col style="width: 10%">
-<col style="width: 25%">
+<col style="width: 27%">
 <col style="width: 5%">
-<col style="width: 9%">
-<col style="width: 7%">
-<col style="width: 41%">
+<col style="width: 10%">
+<col style="width: 8%">
+<col style="width: 38%">
 </colgroup>
 <thead>
 <tr class="header">
@@ -282,83 +311,83 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <tbody>
 <tr class="odd">
 <td style="text-align: right;">0.03333333</td>
-<td>Thu Feb 15 01:02:53 IST 2024</td>
+<td>Thu Feb 15 01:36:35 IST 2024</td>
 <td style="text-align: right;">7</td>
 <td>false</td>
 <td style="text-align: right;">10</td>
-<td>The Fed says it will keep rates near zero until</td>
+<td>The Fed says it’s all about the money</td>
 </tr>
 <tr class="even">
 <td style="text-align: right;">0.03333333</td>
-<td>Thu Feb 15 01:02:54 IST 2024</td>
+<td>Thu Feb 15 01:36:35 IST 2024</td>
 <td style="text-align: right;">7</td>
 <td>false</td>
 <td style="text-align: right;">10</td>
-<td>The Fed says it will keep rates low for a</td>
+<td>The Fed says it’s all about the money</td>
 </tr>
 <tr class="odd">
 <td style="text-align: right;">0.03333333</td>
-<td>Thu Feb 15 01:02:54 IST 2024</td>
+<td>Thu Feb 15 01:36:37 IST 2024</td>
 <td style="text-align: right;">7</td>
 <td>false</td>
 <td style="text-align: right;">10</td>
-<td>The Fed says it will keep rates low for the</td>
+<td>The Fed says it were but the GOP lies</td>
 </tr>
 <tr class="even">
 <td style="text-align: right;">0.03333333</td>
-<td>Thu Feb 15 01:02:54 IST 2024</td>
+<td>Thu Feb 15 01:36:37 IST 2024</td>
 <td style="text-align: right;">7</td>
 <td>false</td>
 <td style="text-align: right;">10</td>
-<td>The Fed says it will keep rates low for a</td>
+<td>The Fed says it were but the GOP says</td>
 </tr>
 <tr class="odd">
 <td style="text-align: right;">0.03333333</td>
-<td>Thu Feb 15 01:02:54 IST 2024</td>
+<td>Thu Feb 15 01:36:37 IST 2024</td>
 <td style="text-align: right;">7</td>
 <td>false</td>
 <td style="text-align: right;">10</td>
-<td>The Fed says it will keep rates at near zero</td>
+<td>The Fed says it were but the GOP won</td>
 </tr>
 <tr class="even">
 <td style="text-align: right;">0.03333333</td>
-<td>Thu Feb 15 01:02:55 IST 2024</td>
+<td>Thu Feb 15 01:36:37 IST 2024</td>
 <td style="text-align: right;">7</td>
 <td>false</td>
 <td style="text-align: right;">10</td>
-<td>The Fed says there is no need for an emer</td>
+<td>The Fed says it were but the GOP will</td>
 </tr>
 <tr class="odd">
 <td style="text-align: right;">0.03333333</td>
-<td>Thu Feb 15 01:02:55 IST 2024</td>
+<td>Thu Feb 15 01:36:37 IST 2024</td>
 <td style="text-align: right;">7</td>
 <td>false</td>
 <td style="text-align: right;">10</td>
-<td>The Fed says there is no need for a rate</td>
+<td>The Fed says it were but the GOP says</td>
 </tr>
 <tr class="even">
 <td style="text-align: right;">0.03333333</td>
-<td>Thu Feb 15 01:02:56 IST 2024</td>
+<td>Thu Feb 15 01:36:37 IST 2024</td>
 <td style="text-align: right;">7</td>
 <td>false</td>
 <td style="text-align: right;">10</td>
-<td>The Fed says there is no need to print more</td>
+<td>The Fed says it were but the rest of the</td>
 </tr>
 <tr class="odd">
 <td style="text-align: right;">0.03333333</td>
-<td>Thu Feb 15 01:02:56 IST 2024</td>
+<td>Thu Feb 15 01:36:37 IST 2024</td>
 <td style="text-align: right;">7</td>
 <td>false</td>
 <td style="text-align: right;">10</td>
-<td>The Fed says there is no need to raise rates</td>
+<td>The Fed says it were but the rest of the</td>
 </tr>
 <tr class="even">
 <td style="text-align: right;">0.03333333</td>
-<td>Thu Feb 15 01:02:57 IST 2024</td>
+<td>Thu Feb 15 01:36:37 IST 2024</td>
 <td style="text-align: right;">7</td>
 <td>false</td>
 <td style="text-align: right;">10</td>
-<td>The Fed says it’s doing this to help</td>
+<td>The Fed says it were but the rest of the</td>
 </tr>
 </tbody>
 </table>

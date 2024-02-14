@@ -309,7 +309,7 @@ window.Quarto = {
 <span id="cb4-4"><a href="#cb4-4" aria-hidden="true" tabindex="-1"></a>     [(<span class="kw">-&gt;&gt;</span> #(<span class="kw">-&gt;&gt;</span> <span class="st">"How much wood"</span></span>
 <span id="cb4-5"><a href="#cb4-5" aria-hidden="true" tabindex="-1"></a>                 llm/tokenize</span>
 <span id="cb4-6"><a href="#cb4-6" aria-hidden="true" tabindex="-1"></a>                 (<span class="kw">iterate</span> (<span class="kw">partial</span> M-step *context))</span>
-<span id="cb4-7"><a href="#cb4-7" aria-hidden="true" tabindex="-1"></a>                 (<span class="kw">take</span> <span class="dv">5</span>)</span>
+<span id="cb4-7"><a href="#cb4-7" aria-hidden="true" tabindex="-1"></a>                 (<span class="kw">take</span> <span class="dv">10</span>)</span>
 <span id="cb4-8"><a href="#cb4-8" aria-hidden="true" tabindex="-1"></a>                 <span class="kw">last</span></span>
 <span id="cb4-9"><a href="#cb4-9" aria-hidden="true" tabindex="-1"></a>                 llm/untokenize)</span>
 <span id="cb4-10"><a href="#cb4-10" aria-hidden="true" tabindex="-1"></a>           (<span class="kw">repeatedly</span> <span class="dv">5</span>)</span>
@@ -317,15 +317,15 @@ window.Quarto = {
 <span id="cb4-12"><a href="#cb4-12" aria-hidden="true" tabindex="-1"></a>      (trie/visualize-trie <span class="at">@*context</span>)])))</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </div>
 <div class="printedClojure">
-<div class="sourceCode" id="cb5"><pre class="sourceCode clojure code-with-copy"><code class="sourceCode clojure"><span id="cb5-1"><a href="#cb5-1" aria-hidden="true" tabindex="-1"></a>[<span class="st">"How much wood would a woodch"</span></span>
-<span id="cb5-2"><a href="#cb5-2" aria-hidden="true" tabindex="-1"></a> <span class="st">"How much woodchuck would a"</span></span>
-<span id="cb5-3"><a href="#cb5-3" aria-hidden="true" tabindex="-1"></a> <span class="st">"How much wood a woodchuck"</span></span>
-<span id="cb5-4"><a href="#cb5-4" aria-hidden="true" tabindex="-1"></a> <span class="st">"How much wooduck would go into"</span></span>
-<span id="cb5-5"><a href="#cb5-5" aria-hidden="true" tabindex="-1"></a> <span class="st">"How much wood in this picture?'"</span>]</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="sourceCode" id="cb5"><pre class="sourceCode clojure code-with-copy"><code class="sourceCode clojure"><span id="cb5-1"><a href="#cb5-1" aria-hidden="true" tabindex="-1"></a>[<span class="st">"How much wood would a woodchuck chuck if a"</span></span>
+<span id="cb5-2"><a href="#cb5-2" aria-hidden="true" tabindex="-1"></a> <span class="st">"How much wood a woodchuck can chuck?” The"</span></span>
+<span id="cb5-3"><a href="#cb5-3" aria-hidden="true" tabindex="-1"></a> <span class="st">"How much wood</span><span class="sc">\n</span><span class="st"> Hinweis: Hier ist die Menge des"</span></span>
+<span id="cb5-4"><a href="#cb5-4" aria-hidden="true" tabindex="-1"></a> <span class="st">"How much wood desires there are, wood it chooses"</span></span>
+<span id="cb5-5"><a href="#cb5-5" aria-hidden="true" tabindex="-1"></a> <span class="st">"How much woodoses does a woodchuck have?”</span><span class="sc">\n</span><span class="st">"</span>]</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </div>
 <div style="height:400px;width:400px;"><script>
 {
-  value = {"elements":{"nodes":[{"data":{"id":"0","word":"(root)"}},{"data":{"id":"1","token":5328,"word":"How","background":"lightgreen"}},{"data":{"id":"2","token":1568,"word":" much","background":"lightgreen"}},{"data":{"id":"3","token":8112,"word":" wood","background":"lightgreen"}},{"data":{"id":"4","token":723,"word":" would","background":"lightgreen"}},{"data":{"id":"5","token":305,"word":"ch","background":"lightgreen"}},{"data":{"id":"6","token":263,"word":" a","background":"lightgreen"}},{"data":{"id":"7","token":2707,"word":"uck","background":"lightgreen"}},{"data":{"id":"8","token":297,"word":" in","background":"lightgreen"}},{"data":{"id":"9","token":263,"word":" a","background":"lightgreen"}},{"data":{"id":"10","token":8112,"word":" wood","background":"lightgreen"}},{"data":{"id":"11","token":2707,"word":"uck","background":"lightgreen"}},{"data":{"id":"12","token":723,"word":" would","background":"lightgreen"}},{"data":{"id":"13","token":8112,"word":" wood","background":"lightgreen"}},{"data":{"id":"14","token":305,"word":"ch","background":"lightgreen"}},{"data":{"id":"15","token":723,"word":" would","background":"lightgreen"}},{"data":{"id":"16","token":748,"word":" go","background":"lightgreen"}},{"data":{"id":"17","token":445,"word":" this","background":"lightgreen"}},{"data":{"id":"18","token":7623,"word":" picture","background":"lightgreen"}}],"edges":[{"data":{"id":"0-1","source":"0","target":"1"}},{"data":{"id":"1-2","source":"1","target":"2"}},{"data":{"id":"2-3","source":"2","target":"3"}},{"data":{"id":"3-4","source":"3","target":"4"}},{"data":{"id":"3-5","source":"3","target":"5"}},{"data":{"id":"3-6","source":"3","target":"6"}},{"data":{"id":"3-7","source":"3","target":"7"}},{"data":{"id":"3-8","source":"3","target":"8"}},{"data":{"id":"4-9","source":"4","target":"9"}},{"data":{"id":"9-10","source":"9","target":"10"}},{"data":{"id":"5-11","source":"5","target":"11"}},{"data":{"id":"11-12","source":"11","target":"12"}},{"data":{"id":"6-13","source":"6","target":"13"}},{"data":{"id":"13-14","source":"13","target":"14"}},{"data":{"id":"7-15","source":"7","target":"15"}},{"data":{"id":"15-16","source":"15","target":"16"}},{"data":{"id":"8-17","source":"8","target":"17"}},{"data":{"id":"17-18","source":"17","target":"18"}}]},"style":[{"selector":"node","css":{"content":"data(word)","text-valign":"center","text-halign":"center","height":50,"width":50,"background-color":"data(background)"}},{"selector":"edge","css":{"curve-style":"bezier","target-arrow-shape":"triangle"}}],"layout":{"name":"cose"}};
+  value = {"elements":{"nodes":[{"data":{"id":"0","word":"(root)"}},{"data":{"id":"1","token":5328,"word":"How","background":"lightgreen"}},{"data":{"id":"2","token":1568,"word":" much","background":"lightgreen"}},{"data":{"id":"3","token":8112,"word":" wood","background":"lightgreen"}},{"data":{"id":"4","token":723,"word":" would","background":"lightgreen"}},{"data":{"id":"5","token":263,"word":" a","background":"lightgreen"}},{"data":{"id":"6","token":13,"word":"\n","background":"lightgreen"}},{"data":{"id":"7","token":553,"word":" des","background":"lightgreen"}},{"data":{"id":"8","token":15806,"word":"oses","background":"lightgreen"}},{"data":{"id":"9","token":263,"word":" a","background":"lightgreen"}},{"data":{"id":"10","token":8112,"word":" wood","background":"lightgreen"}},{"data":{"id":"11","token":305,"word":"ch","background":"lightgreen"}},{"data":{"id":"12","token":2707,"word":"uck","background":"lightgreen"}},{"data":{"id":"13","token":521,"word":" ch","background":"lightgreen"}},{"data":{"id":"14","token":2707,"word":"uck","background":"lightgreen"}},{"data":{"id":"15","token":565,"word":" if","background":"lightgreen"}},{"data":{"id":"16","token":8112,"word":" wood","background":"lightgreen"}},{"data":{"id":"17","token":305,"word":"ch","background":"lightgreen"}},{"data":{"id":"18","token":2707,"word":"uck","background":"lightgreen"}},{"data":{"id":"19","token":508,"word":" can","background":"lightgreen"}},{"data":{"id":"20","token":521,"word":" ch","background":"lightgreen"}},{"data":{"id":"21","token":2707,"word":"uck","background":"lightgreen"}},{"data":{"id":"22","token":6677,"word":"?\u201d","background":"lightgreen"}},{"data":{"id":"23","token":18627,"word":" Hinweis","background":"lightgreen"}},{"data":{"id":"24","token":29901,"word":":","background":"lightgreen"}},{"data":{"id":"25","token":12433,"word":" Hier","background":"lightgreen"}},{"data":{"id":"26","token":1752,"word":" ist","background":"lightgreen"}},{"data":{"id":"27","token":762,"word":" die","background":"lightgreen"}},{"data":{"id":"28","token":7567,"word":" Men","background":"lightgreen"}},{"data":{"id":"29","token":479,"word":"ge","background":"lightgreen"}},{"data":{"id":"30","token":2658,"word":"ires","background":"lightgreen"}},{"data":{"id":"31","token":727,"word":" there","background":"lightgreen"}},{"data":{"id":"32","token":526,"word":" are","background":"lightgreen"}},{"data":{"id":"33","token":29892,"word":",","background":"lightgreen"}},{"data":{"id":"34","token":8112,"word":" wood","background":"lightgreen"}},{"data":{"id":"35","token":372,"word":" it","background":"lightgreen"}},{"data":{"id":"36","token":3060,"word":" cho","background":"lightgreen"}},{"data":{"id":"37","token":947,"word":" does","background":"lightgreen"}},{"data":{"id":"38","token":263,"word":" a","background":"lightgreen"}},{"data":{"id":"39","token":8112,"word":" wood","background":"lightgreen"}},{"data":{"id":"40","token":305,"word":"ch","background":"lightgreen"}},{"data":{"id":"41","token":2707,"word":"uck","background":"lightgreen"}},{"data":{"id":"42","token":505,"word":" have","background":"lightgreen"}},{"data":{"id":"43","token":6677,"word":"?\u201d","background":"lightgreen"}}],"edges":[{"data":{"id":"0-1","source":"0","target":"1"}},{"data":{"id":"1-2","source":"1","target":"2"}},{"data":{"id":"2-3","source":"2","target":"3"}},{"data":{"id":"3-4","source":"3","target":"4"}},{"data":{"id":"3-5","source":"3","target":"5"}},{"data":{"id":"3-6","source":"3","target":"6"}},{"data":{"id":"3-7","source":"3","target":"7"}},{"data":{"id":"3-8","source":"3","target":"8"}},{"data":{"id":"4-9","source":"4","target":"9"}},{"data":{"id":"9-10","source":"9","target":"10"}},{"data":{"id":"10-11","source":"10","target":"11"}},{"data":{"id":"11-12","source":"11","target":"12"}},{"data":{"id":"12-13","source":"12","target":"13"}},{"data":{"id":"13-14","source":"13","target":"14"}},{"data":{"id":"14-15","source":"14","target":"15"}},{"data":{"id":"5-16","source":"5","target":"16"}},{"data":{"id":"16-17","source":"16","target":"17"}},{"data":{"id":"17-18","source":"17","target":"18"}},{"data":{"id":"18-19","source":"18","target":"19"}},{"data":{"id":"19-20","source":"19","target":"20"}},{"data":{"id":"20-21","source":"20","target":"21"}},{"data":{"id":"21-22","source":"21","target":"22"}},{"data":{"id":"6-23","source":"6","target":"23"}},{"data":{"id":"23-24","source":"23","target":"24"}},{"data":{"id":"24-25","source":"24","target":"25"}},{"data":{"id":"25-26","source":"25","target":"26"}},{"data":{"id":"26-27","source":"26","target":"27"}},{"data":{"id":"27-28","source":"27","target":"28"}},{"data":{"id":"28-29","source":"28","target":"29"}},{"data":{"id":"7-30","source":"7","target":"30"}},{"data":{"id":"30-31","source":"30","target":"31"}},{"data":{"id":"31-32","source":"31","target":"32"}},{"data":{"id":"32-33","source":"32","target":"33"}},{"data":{"id":"33-34","source":"33","target":"34"}},{"data":{"id":"34-35","source":"34","target":"35"}},{"data":{"id":"35-36","source":"35","target":"36"}},{"data":{"id":"8-37","source":"8","target":"37"}},{"data":{"id":"37-38","source":"37","target":"38"}},{"data":{"id":"38-39","source":"38","target":"39"}},{"data":{"id":"39-40","source":"39","target":"40"}},{"data":{"id":"40-41","source":"40","target":"41"}},{"data":{"id":"41-42","source":"41","target":"42"}},{"data":{"id":"42-43","source":"42","target":"43"}}]},"style":[{"selector":"node","css":{"content":"data(word)","text-valign":"center","text-halign":"center","height":50,"width":50,"background-color":"data(background)"}},{"selector":"edge","css":{"curve-style":"bezier","target-arrow-shape":"triangle"}}],"layout":{"name":"cose"}};
   value['container'] = document.currentScript.parentElement;
   cytoscape(value);
 };</script></div>
@@ -348,14 +348,14 @@ window.Quarto = {
 <span id="cb7-3"><a href="#cb7-3" aria-hidden="true" tabindex="-1"></a>        tokens (<span class="kw">-&gt;&gt;</span> <span class="st">"How much wood"</span></span>
 <span id="cb7-4"><a href="#cb7-4" aria-hidden="true" tabindex="-1"></a>                    llm/tokenize</span>
 <span id="cb7-5"><a href="#cb7-5" aria-hidden="true" tabindex="-1"></a>                    (<span class="kw">iterate</span> (<span class="kw">partial</span> M-step *context))</span>
-<span id="cb7-6"><a href="#cb7-6" aria-hidden="true" tabindex="-1"></a>                    (<span class="kw">take</span> <span class="dv">5</span>)</span>
+<span id="cb7-6"><a href="#cb7-6" aria-hidden="true" tabindex="-1"></a>                    (<span class="kw">take</span> <span class="dv">10</span>)</span>
 <span id="cb7-7"><a href="#cb7-7" aria-hidden="true" tabindex="-1"></a>                    <span class="kw">last</span>)]</span>
 <span id="cb7-8"><a href="#cb7-8" aria-hidden="true" tabindex="-1"></a>    {<span class="at">:text</span> (llm/untokenize tokens)</span>
 <span id="cb7-9"><a href="#cb7-9" aria-hidden="true" tabindex="-1"></a>     <span class="at">:G5</span> (G <span class="dv">5</span> tokens)</span>
 <span id="cb7-10"><a href="#cb7-10" aria-hidden="true" tabindex="-1"></a>     <span class="at">:G9</span> (G <span class="dv">9</span> tokens)}))</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </div>
 <div class="printedClojure">
-<div class="sourceCode" id="cb8"><pre class="sourceCode clojure code-with-copy"><code class="sourceCode clojure"><span id="cb8-1"><a href="#cb8-1" aria-hidden="true" tabindex="-1"></a>{<span class="at">:text</span> <span class="st">"How much wood could a woodch"</span>, <span class="at">:G5</span> <span class="dv">0</span>, <span class="at">:G9</span> <span class="dv">1</span>}</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="sourceCode" id="cb8"><pre class="sourceCode clojure code-with-copy"><code class="sourceCode clojure"><span id="cb8-1"><a href="#cb8-1" aria-hidden="true" tabindex="-1"></a>{<span class="at">:text</span> <span class="st">"How much wood would a woodchuck chuck if a"</span>, <span class="at">:G5</span> <span class="dv">0</span>, <span class="at">:G9</span> <span class="dv">1</span>}</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </div>
 </section>
 </section>
@@ -569,83 +569,83 @@ window.Quarto = {
 <tbody>
 <tr class="odd">
 <td>0.03333333333333333</td>
-<td>Thu Feb 15 01:06:29 IST 2024</td>
+<td>Thu Feb 15 01:40:25 IST 2024</td>
 <td>12</td>
 <td>false</td>
 <td>15</td>
-<td>The Fed says it’s not an easy task to make the 2</td>
+<td>The Fed says “no” to a rate cut amid signs of a slow</td>
 </tr>
 <tr class="even">
 <td>0.03333333333333333</td>
-<td>Thu Feb 15 01:06:30 IST 2024</td>
+<td>Thu Feb 15 01:40:25 IST 2024</td>
 <td>12</td>
 <td>false</td>
 <td>15</td>
-<td>The Fed says it’s not an easy call, but will take its</td>
+<td>The Fed says “no” to a rate cut amid signs of a weak</td>
 </tr>
 <tr class="odd">
 <td>0.03333333333333333</td>
-<td>Thu Feb 15 01:06:30 IST 2024</td>
+<td>Thu Feb 15 01:40:26 IST 2024</td>
 <td>12</td>
 <td>false</td>
 <td>15</td>
-<td>The Fed says it’s not an easy call, and that the infl</td>
+<td>The Fed says “no” to a rate cut after the FOMC</td>
 </tr>
 <tr class="even">
 <td>0.03333333333333333</td>
-<td>Thu Feb 15 01:06:31 IST 2024</td>
+<td>Thu Feb 15 01:40:26 IST 2024</td>
 <td>12</td>
 <td>false</td>
 <td>15</td>
-<td>The Fed says itDP, DY, DX, and DY</td>
+<td>The Fed says “no” to a rate cut after a more than two</td>
 </tr>
 <tr class="odd">
 <td>0.03333333333333333</td>
-<td>Thu Feb 15 01:06:32 IST 2024</td>
+<td>Thu Feb 15 01:40:27 IST 2024</td>
 <td>12</td>
 <td>false</td>
 <td>15</td>
-<td>The Fed says itDP, DY, DPCE, rate,</td>
+<td>The Fed says that the CAFR will be based on the 2</td>
 </tr>
 <tr class="even">
 <td>0.03333333333333333</td>
-<td>Thu Feb 15 01:06:32 IST 2024</td>
+<td>Thu Feb 15 01:40:27 IST 2024</td>
 <td>12</td>
 <td>false</td>
 <td>15</td>
-<td>The Fed says itDP, DY, DP, or other ac</td>
+<td>The Fed says that the CAFR will be based on the 2</td>
 </tr>
 <tr class="odd">
 <td>0.03333333333333333</td>
-<td>Thu Feb 15 01:06:33 IST 2024</td>
+<td>Thu Feb 15 01:40:28 IST 2024</td>
 <td>12</td>
 <td>false</td>
 <td>15</td>
-<td>The Fed says itDP, DY, DT, DY-</td>
+<td>The Fed says that the CAFR audit must be done by an</td>
 </tr>
 <tr class="even">
 <td>0.03333333333333333</td>
-<td>Thu Feb 15 01:06:33 IST 2024</td>
+<td>Thu Feb 15 01:40:29 IST 2024</td>
 <td>12</td>
 <td>false</td>
 <td>15</td>
-<td>The Fed says itDP, DY, DT, and T are</td>
+<td>The Fed says that the CAFR of each bank is $3 tr</td>
 </tr>
 <tr class="odd">
 <td>0.03333333333333333</td>
-<td>Thu Feb 15 01:06:34 IST 2024</td>
+<td>Thu Feb 15 01:40:29 IST 2024</td>
 <td>12</td>
 <td>false</td>
 <td>15</td>
-<td>The Fed says itDP, DY, DT, and DX</td>
+<td>The Fed says that the CAFR of each bank is $33</td>
 </tr>
 <tr class="even">
 <td>0.03333333333333333</td>
-<td>Thu Feb 15 01:06:34 IST 2024</td>
+<td>Thu Feb 15 01:40:30 IST 2024</td>
 <td>12</td>
 <td>false</td>
 <td>15</td>
-<td>The Fed says itDP, DY, DT, and DV</td>
+<td>The Fed says that the CAFR of each bank is $10</td>
 </tr>
 </tbody>
 </table>
