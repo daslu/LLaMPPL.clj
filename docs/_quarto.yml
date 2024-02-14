@@ -4,4 +4,4 @@ format:
 project: {type: book}
 book:
   title: LLaMPPL.clj
-  chapters: [index.qmd, setup.qmd, llamppl.utils.qmd, llamppl.llms.qmd, llamppl.cache.qmd]
+  chapters: [index.qmd, setup.qmd, llamppl.utils.qmd, llamppl.llm.qmd, llamppl.cache.qmd, llamppl.trie.qmd, llamppl.smc.qmd]

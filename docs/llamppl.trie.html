@@ -1,0 +1,1003 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" lang="en" xml:lang="en"><head>
+
+<meta charset="utf-8">
+<meta name="generator" content="quarto-1.4.549">
+
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+
+
+<title>LLaMPPL.clj - 6&nbsp; A token-trie cache</title>
+<style>
+code{white-space: pre-wrap;}
+span.smallcaps{font-variant: small-caps;}
+div.columns{display: flex; gap: min(4vw, 1.5em);}
+div.column{flex: auto; overflow-x: auto;}
+div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
+ul.task-list{list-style: none;}
+ul.task-list li input[type="checkbox"] {
+  width: 0.8em;
+  margin: 0 0.8em 0.2em -1em; /* quarto-specific, see https://github.com/quarto-dev/quarto-cli/issues/4556 */ 
+  vertical-align: middle;
+}
+/* CSS for syntax highlighting */
+pre > code.sourceCode { white-space: pre; position: relative; }
+pre > code.sourceCode > span { line-height: 1.25; }
+pre > code.sourceCode > span:empty { height: 1.2em; }
+.sourceCode { overflow: visible; }
+code.sourceCode > span { color: inherit; text-decoration: inherit; }
+div.sourceCode { margin: 1em 0; }
+pre.sourceCode { margin: 0; }
+@media screen {
+div.sourceCode { overflow: auto; }
+}
+@media print {
+pre > code.sourceCode { white-space: pre-wrap; }
+pre > code.sourceCode > span { text-indent: -5em; padding-left: 5em; }
+}
+pre.numberSource code
+  { counter-reset: source-line 0; }
+pre.numberSource code > span
+  { position: relative; left: -4em; counter-increment: source-line; }
+pre.numberSource code > span > a:first-child::before
+  { content: counter(source-line);
+    position: relative; left: -1em; text-align: right; vertical-align: baseline;
+    border: none; display: inline-block;
+    -webkit-touch-callout: none; -webkit-user-select: none;
+    -khtml-user-select: none; -moz-user-select: none;
+    -ms-user-select: none; user-select: none;
+    padding: 0 4px; width: 4em;
+  }
+pre.numberSource { margin-left: 3em;  padding-left: 4px; }
+div.sourceCode
+  {   }
+@media screen {
+pre > code.sourceCode > span > a:first-child::before { text-decoration: underline; }
+}
+</style>
+
+
+<script src="site_libs/quarto-nav/quarto-nav.js"></script>
+<script src="site_libs/quarto-nav/headroom.min.js"></script>
+<script src="site_libs/clipboard/clipboard.min.js"></script>
+<script src="site_libs/quarto-search/autocomplete.umd.js"></script>
+<script src="site_libs/quarto-search/fuse.min.js"></script>
+<script src="site_libs/quarto-search/quarto-search.js"></script>
+<meta name="quarto:offset" content="./">
+<link href="./llamppl.smc.html" rel="next">
+<link href="./llamppl.cache.html" rel="prev">
+<script src="site_libs/quarto-html/quarto.js"></script>
+<script src="site_libs/quarto-html/popper.min.js"></script>
+<script src="site_libs/quarto-html/tippy.umd.min.js"></script>
+<script src="site_libs/quarto-html/anchor.min.js"></script>
+<link href="site_libs/quarto-html/tippy.css" rel="stylesheet">
+<link href="site_libs/quarto-html/quarto-syntax-highlighting.css" rel="stylesheet" id="quarto-text-highlighting-styles">
+<script src="site_libs/bootstrap/bootstrap.min.js"></script>
+<link href="site_libs/bootstrap/bootstrap-icons.css" rel="stylesheet">
+<link href="site_libs/bootstrap/bootstrap.min.css" rel="stylesheet" id="quarto-bootstrap" data-mode="light">
+<script id="quarto-search-options" type="application/json">{
+  "location": "sidebar",
+  "copy-button": false,
+  "collapse-after": 3,
+  "panel-placement": "start",
+  "type": "textbox",
+  "limit": 50,
+  "keyboard-shortcut": [
+    "f",
+    "/",
+    "s"
+  ],
+  "show-item-context": false,
+  "language": {
+    "search-no-results-text": "No results",
+    "search-matching-documents-text": "matching documents",
+    "search-copy-link-title": "Copy link to search",
+    "search-hide-matches-text": "Hide additional matches",
+    "search-more-match-text": "more match in this document",
+    "search-more-matches-text": "more matches in this document",
+    "search-clear-button-title": "Clear",
+    "search-text-placeholder": "",
+    "search-detached-cancel-button-title": "Cancel",
+    "search-submit-button-title": "Submit",
+    "search-label": "Search"
+  }
+}</script>
+<link rel="icon" href="data:,">
+
+
+</head>
+
+<body class="nav-sidebar floating">
+
+<div id="quarto-search-results"></div>
+  <header id="quarto-header" class="headroom fixed-top">
+  <nav class="quarto-secondary-nav">
+    <div class="container-fluid d-flex">
+      <button type="button" class="quarto-btn-toggle btn" data-bs-toggle="collapse" data-bs-target=".quarto-sidebar-collapse-item" aria-controls="quarto-sidebar" aria-expanded="false" aria-label="Toggle sidebar navigation" onclick="if (window.quartoToggleHeadroom) { window.quartoToggleHeadroom(); }">
+        <i class="bi bi-layout-text-sidebar-reverse"></i>
+      </button>
+        <nav class="quarto-page-breadcrumbs" aria-label="breadcrumb"><ol class="breadcrumb"><li class="breadcrumb-item"><a href="./llamppl.trie.html"><span class="chapter-number">6</span>&nbsp; <span class="chapter-title">A token-trie cache</span></a></li></ol></nav>
+        <a class="flex-grow-1" role="button" data-bs-toggle="collapse" data-bs-target=".quarto-sidebar-collapse-item" aria-controls="quarto-sidebar" aria-expanded="false" aria-label="Toggle sidebar navigation" onclick="if (window.quartoToggleHeadroom) { window.quartoToggleHeadroom(); }">      
+        </a>
+      <button type="button" class="btn quarto-search-button" aria-label="" onclick="window.quartoOpenSearch();">
+        <i class="bi bi-search"></i>
+      </button>
+    </div>
+  </nav>
+</header>
+<!-- content -->
+<div id="quarto-content" class="quarto-container page-columns page-rows-contents page-layout-article">
+<!-- sidebar -->
+  <nav id="quarto-sidebar" class="sidebar collapse collapse-horizontal quarto-sidebar-collapse-item sidebar-navigation floating overflow-auto">
+    <div class="pt-lg-2 mt-2 text-left sidebar-header">
+    <div class="sidebar-title mb-0 py-0">
+      <a href="./">LLaMPPL.clj</a> 
+    </div>
+      </div>
+        <div class="mt-2 flex-shrink-0 align-items-center">
+        <div class="sidebar-search">
+        <div id="quarto-search" class="" title="Search"></div>
+        </div>
+        </div>
+    <div class="sidebar-menu-container"> 
+    <ul class="list-unstyled mt-1">
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./index.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">1</span>&nbsp; <span class="chapter-title">Preface</span></span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./setup.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">2</span>&nbsp; <span class="chapter-title">Setup</span></span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./llamppl.utils.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">3</span>&nbsp; <span class="chapter-title">A few utility functions</span></span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./llamppl.llm.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">4</span>&nbsp; <span class="chapter-title">LLMs: Using llama.clj</span></span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./llamppl.cache.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">5</span>&nbsp; <span class="chapter-title">Caching model state</span></span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./llamppl.trie.html" class="sidebar-item-text sidebar-link active">
+ <span class="menu-text"><span class="chapter-number">6</span>&nbsp; <span class="chapter-title">A token-trie cache</span></span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./llamppl.smc.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">7</span>&nbsp; <span class="chapter-title">SMC Sampling of a probabilistic model</span></span></a>
+  </div>
+</li>
+    </ul>
+    </div>
+</nav>
+<div id="quarto-sidebar-glass" class="quarto-sidebar-collapse-item" data-bs-toggle="collapse" data-bs-target=".quarto-sidebar-collapse-item"></div>
+<!-- margin-sidebar -->
+    <div id="quarto-margin-sidebar" class="sidebar margin-sidebar">
+        <nav id="TOC" role="doc-toc" class="toc-active">
+    <h2 id="toc-title">Table of contents</h2>
+   
+  <ul>
+  <li><a href="#evaluation" id="toc-evaluation" class="nav-link active" data-scroll-target="#evaluation"><span class="header-section-number">6.1</span> Evaluation</a></li>
+  <li><a href="#visualising-the-trie" id="toc-visualising-the-trie" class="nav-link" data-scroll-target="#visualising-the-trie"><span class="header-section-number">6.2</span> Visualising the trie</a></li>
+  <li><a href="#sampling-random-tokens" id="toc-sampling-random-tokens" class="nav-link" data-scroll-target="#sampling-random-tokens"><span class="header-section-number">6.3</span> Sampling random tokens</a></li>
+  </ul>
+</nav>
+    </div>
+<!-- main -->
+<main class="content" id="quarto-document-content">
+
+<header id="title-block-header" class="quarto-title-block default">
+<div class="quarto-title">
+<h1 class="title"><span class="chapter-number">6</span>&nbsp; <span class="chapter-title">A token-trie cache</span></h1>
+</div>
+
+
+
+<div class="quarto-title-meta">
+
+    
+  
+    
+  </div>
+  
+
+
+</header>
+
+
+<style></style>
+<style>.printedClojure .sourceCode {
+  background-color: transparent;
+  border-style: none;
+}
+</style>
+<script src="llamppl.trie_files/md-default0.js" type="text/javascript"></script>
+<script src="llamppl.trie_files/md-default1.js" type="text/javascript"></script>
+<script src="llamppl.trie_files/cytoscape2.js" type="text/javascript"></script>
+<div class="sourceClojure">
+<div class="sourceCode" id="cb1"><pre class="sourceCode clojure code-with-copy"><code class="sourceCode clojure"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a>(<span class="kw">ns</span> llamppl.trie</span>
+<span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a>  (<span class="at">:require</span> [com.phronemophobic.llama <span class="at">:as</span> llama]</span>
+<span id="cb1-3"><a href="#cb1-3" aria-hidden="true" tabindex="-1"></a>            [com.phronemophobic.llama.raw <span class="at">:as</span> raw]</span>
+<span id="cb1-4"><a href="#cb1-4" aria-hidden="true" tabindex="-1"></a>            [scicloj.kindly.v4.kind <span class="at">:as</span> kind]</span>
+<span id="cb1-5"><a href="#cb1-5" aria-hidden="true" tabindex="-1"></a>            [scicloj.kindly.v4.api <span class="at">:as</span> kindly]</span>
+<span id="cb1-6"><a href="#cb1-6" aria-hidden="true" tabindex="-1"></a>            [tech.v3.datatype.argops <span class="at">:as</span> argops]</span>
+<span id="cb1-7"><a href="#cb1-7" aria-hidden="true" tabindex="-1"></a>            [clojure.<span class="kw">walk</span> <span class="at">:as</span> <span class="kw">walk</span>]</span>
+<span id="cb1-8"><a href="#cb1-8" aria-hidden="true" tabindex="-1"></a>            [llamppl.utils <span class="at">:as</span> utils]</span>
+<span id="cb1-9"><a href="#cb1-9" aria-hidden="true" tabindex="-1"></a>            [llamppl.llm <span class="at">:as</span> llm]</span>
+<span id="cb1-10"><a href="#cb1-10" aria-hidden="true" tabindex="-1"></a>            [llamppl.cache <span class="at">:as</span> cache]))</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+<div class="sourceClojure">
+<div class="sourceCode" id="cb2"><pre class="sourceCode clojure code-with-copy"><code class="sourceCode clojure"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a>^<span class="at">:kind/hide-code</span></span>
+<span id="cb2-2"><a href="#cb2-2" aria-hidden="true" tabindex="-1"></a>(<span class="bu">def</span><span class="fu"> md</span></span>
+<span id="cb2-3"><a href="#cb2-3" aria-hidden="true" tabindex="-1"></a>  (<span class="kw">comp</span> kindly/hide-code kind/md))</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+<p>Following the LLaMPPL <a href="https://arxiv.org/abs/2306.03081">paper</a> (Section 3, Subsection “Shared Transformer cache”), here we implement a token-trie cache of model states.</p>
+<p>As we’ve seen, we may update the LLM model’s state with a sequence of tokens, and then ask the model for the logits of the next token. Typically, we may have already seen a prefix of the given sequence, and may reuse the model state of that time. The token-trie cache holds such prefix sequences, and their corresponding model states, in a tree structure.</p>
+<section id="evaluation" class="level2" data-number="6.1">
+<h2 data-number="6.1" class="anchored" data-anchor-id="evaluation"><span class="header-section-number">6.1</span> Evaluation</h2>
+<p>We define cached evaluation as a recursive transformation of a context map. Note that it is not a pure functional transformation, as some parts of the map, spefifically the <code>llama-ctx</code> model context and the <code>*cache</code> atom, are mutable.</p>
+<div class="sourceClojure">
+<div class="sourceCode" id="cb3"><pre class="sourceCode clojure code-with-copy"><code class="sourceCode clojure"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a>(<span class="bu">defn</span><span class="fu"> cached-eval </span>[{<span class="at">:as</span> context</span>
+<span id="cb3-2"><a href="#cb3-2" aria-hidden="true" tabindex="-1"></a>                    <span class="at">:keys</span> [llama-ctx</span>
+<span id="cb3-3"><a href="#cb3-3" aria-hidden="true" tabindex="-1"></a>                           llama-ctx-state-id</span>
+<span id="cb3-4"><a href="#cb3-4" aria-hidden="true" tabindex="-1"></a>                           trie</span>
+<span id="cb3-5"><a href="#cb3-5" aria-hidden="true" tabindex="-1"></a>                           *cache</span>
+<span id="cb3-6"><a href="#cb3-6" aria-hidden="true" tabindex="-1"></a>                           tokens</span>
+<span id="cb3-7"><a href="#cb3-7" aria-hidden="true" tabindex="-1"></a>                           <span class="kw">path</span></span>
+<span id="cb3-8"><a href="#cb3-8" aria-hidden="true" tabindex="-1"></a>                           sub-trie</span>
+<span id="cb3-9"><a href="#cb3-9" aria-hidden="true" tabindex="-1"></a>                           remaining-tokens]</span>
+<span id="cb3-10"><a href="#cb3-10" aria-hidden="true" tabindex="-1"></a>                    <span class="at">:or</span> {sub-trie trie</span>
+<span id="cb3-11"><a href="#cb3-11" aria-hidden="true" tabindex="-1"></a>                         <span class="kw">path</span> []</span>
+<span id="cb3-12"><a href="#cb3-12" aria-hidden="true" tabindex="-1"></a>                         remaining-tokens tokens}}]</span>
+<span id="cb3-13"><a href="#cb3-13" aria-hidden="true" tabindex="-1"></a>  (<span class="kw">let</span> [path-&gt;text (<span class="kw">fn</span> [<span class="kw">path</span>]</span>
+<span id="cb3-14"><a href="#cb3-14" aria-hidden="true" tabindex="-1"></a>                     (<span class="kw">-&gt;&gt;</span> <span class="kw">path</span></span>
+<span id="cb3-15"><a href="#cb3-15" aria-hidden="true" tabindex="-1"></a>                          (<span class="kw">filter</span> <span class="kw">number?</span>)</span>
+<span id="cb3-16"><a href="#cb3-16" aria-hidden="true" tabindex="-1"></a>                          llm/untokenize))]</span>
+<span id="cb3-17"><a href="#cb3-17" aria-hidden="true" tabindex="-1"></a>    (<span class="kw">if</span> (<span class="kw">empty?</span> remaining-tokens)</span>
+<span id="cb3-18"><a href="#cb3-18" aria-hidden="true" tabindex="-1"></a>      <span class="co">;; done - return this context</span></span>
+<span id="cb3-19"><a href="#cb3-19" aria-hidden="true" tabindex="-1"></a>      (<span class="kw">do</span></span>
+<span id="cb3-20"><a href="#cb3-20" aria-hidden="true" tabindex="-1"></a>        <span class="co">#_</span>(<span class="kw">prn</span> [<span class="at">:done</span> (path-&gt;text <span class="kw">path</span>)])</span>
+<span id="cb3-21"><a href="#cb3-21" aria-hidden="true" tabindex="-1"></a>        context)</span>
+<span id="cb3-22"><a href="#cb3-22" aria-hidden="true" tabindex="-1"></a>      <span class="co">;; else</span></span>
+<span id="cb3-23"><a href="#cb3-23" aria-hidden="true" tabindex="-1"></a>      (<span class="kw">let</span> [token (<span class="kw">first</span> remaining-tokens)</span>
+<span id="cb3-24"><a href="#cb3-24" aria-hidden="true" tabindex="-1"></a>            <span class="co">;; Look into the next sub trie,</span></span>
+<span id="cb3-25"><a href="#cb3-25" aria-hidden="true" tabindex="-1"></a>            <span class="co">;; following this token:</span></span>
+<span id="cb3-26"><a href="#cb3-26" aria-hidden="true" tabindex="-1"></a>            next-step [<span class="at">:children</span> token]</span>
+<span id="cb3-27"><a href="#cb3-27" aria-hidden="true" tabindex="-1"></a>            next-path (<span class="kw">concat</span> <span class="kw">path</span> next-step)</span>
+<span id="cb3-28"><a href="#cb3-28" aria-hidden="true" tabindex="-1"></a>            next-sub-trie (<span class="kw">get-in</span> sub-trie next-step)]</span>
+<span id="cb3-29"><a href="#cb3-29" aria-hidden="true" tabindex="-1"></a>        (<span class="kw">if</span> (some-&gt;&gt; next-sub-trie</span>
+<span id="cb3-30"><a href="#cb3-30" aria-hidden="true" tabindex="-1"></a>                     <span class="at">:llama-state-id</span></span>
+<span id="cb3-31"><a href="#cb3-31" aria-hidden="true" tabindex="-1"></a>                     (cache/has? *cache))</span>
+<span id="cb3-32"><a href="#cb3-32" aria-hidden="true" tabindex="-1"></a>          <span class="co">;; We have already created next-sub-trie in the past,</span></span>
+<span id="cb3-33"><a href="#cb3-33" aria-hidden="true" tabindex="-1"></a>          <span class="co">;; and we have its llama state still in the cache,</span></span>
+<span id="cb3-34"><a href="#cb3-34" aria-hidden="true" tabindex="-1"></a>          <span class="co">;; so let us step into it.</span></span>
+<span id="cb3-35"><a href="#cb3-35" aria-hidden="true" tabindex="-1"></a>          (<span class="kw">do</span></span>
+<span id="cb3-36"><a href="#cb3-36" aria-hidden="true" tabindex="-1"></a>            <span class="co">#_</span>(<span class="kw">prn</span> [<span class="at">:recur-known</span> (path-&gt;text next-path)])</span>
+<span id="cb3-37"><a href="#cb3-37" aria-hidden="true" tabindex="-1"></a>            (<span class="kw">recur</span> (<span class="kw">-&gt;</span> context</span>
+<span id="cb3-38"><a href="#cb3-38" aria-hidden="true" tabindex="-1"></a>                       (<span class="kw">assoc</span></span>
+<span id="cb3-39"><a href="#cb3-39" aria-hidden="true" tabindex="-1"></a>                        <span class="at">:sub-trie</span> next-sub-trie</span>
+<span id="cb3-40"><a href="#cb3-40" aria-hidden="true" tabindex="-1"></a>                        <span class="at">:path</span> next-path</span>
+<span id="cb3-41"><a href="#cb3-41" aria-hidden="true" tabindex="-1"></a>                        <span class="at">:remaining-tokens</span> (<span class="kw">rest</span> remaining-tokens)</span>
+<span id="cb3-42"><a href="#cb3-42" aria-hidden="true" tabindex="-1"></a>                        <span class="at">:logits</span> (<span class="at">:logits</span> next-sub-trie)))))</span>
+<span id="cb3-43"><a href="#cb3-43" aria-hidden="true" tabindex="-1"></a>          <span class="co">;; Else, we need to create the next sub trie.</span></span>
+<span id="cb3-44"><a href="#cb3-44" aria-hidden="true" tabindex="-1"></a>          (<span class="kw">let</span> [{<span class="at">:keys</span> [state-id state-data]}</span>
+<span id="cb3-45"><a href="#cb3-45" aria-hidden="true" tabindex="-1"></a>                (cache/lookup-or-miss!</span>
+<span id="cb3-46"><a href="#cb3-46" aria-hidden="true" tabindex="-1"></a>                 {:*cache *cache</span>
+<span id="cb3-47"><a href="#cb3-47" aria-hidden="true" tabindex="-1"></a>                  <span class="at">:llama-ctx-fn</span> (<span class="kw">fn</span> []</span>
+<span id="cb3-48"><a href="#cb3-48" aria-hidden="true" tabindex="-1"></a>                                  <span class="co">;; Make sure the llama-ctx has the right state</span></span>
+<span id="cb3-49"><a href="#cb3-49" aria-hidden="true" tabindex="-1"></a>                                  <span class="co">;; to continue.</span></span>
+<span id="cb3-50"><a href="#cb3-50" aria-hidden="true" tabindex="-1"></a>                                  (<span class="kw">cond</span></span>
+<span id="cb3-51"><a href="#cb3-51" aria-hidden="true" tabindex="-1"></a>                                    <span class="co">;; When we are in the beginning of the path,</span></span>
+<span id="cb3-52"><a href="#cb3-52" aria-hidden="true" tabindex="-1"></a>                                    <span class="co">;; take the base state.</span></span>
+<span id="cb3-53"><a href="#cb3-53" aria-hidden="true" tabindex="-1"></a>                                    (<span class="kw">=</span> <span class="kw">path</span> [])</span>
+<span id="cb3-54"><a href="#cb3-54" aria-hidden="true" tabindex="-1"></a>                                    (<span class="kw">do</span></span>
+<span id="cb3-55"><a href="#cb3-55" aria-hidden="true" tabindex="-1"></a>                                      <span class="co">#_</span>(<span class="kw">prn</span> [<span class="at">:set-from-base</span>])</span>
+<span id="cb3-56"><a href="#cb3-56" aria-hidden="true" tabindex="-1"></a>                                      (raw/llama_set_state_data llama-ctx</span>
+<span id="cb3-57"><a href="#cb3-57" aria-hidden="true" tabindex="-1"></a>                                                                llm/base-state-data))</span>
+<span id="cb3-58"><a href="#cb3-58" aria-hidden="true" tabindex="-1"></a>                                    <span class="co">;; When the last evaluation does not fit</span></span>
+<span id="cb3-59"><a href="#cb3-59" aria-hidden="true" tabindex="-1"></a>                                    <span class="co">;; out place in the trie,</span></span>
+<span id="cb3-60"><a href="#cb3-60" aria-hidden="true" tabindex="-1"></a>                                    <span class="co">;; bring the reletant state from cache.</span></span>
+<span id="cb3-61"><a href="#cb3-61" aria-hidden="true" tabindex="-1"></a>                                    (<span class="kw">-&gt;</span> sub-trie</span>
+<span id="cb3-62"><a href="#cb3-62" aria-hidden="true" tabindex="-1"></a>                                        <span class="at">:llama-state-id</span></span>
+<span id="cb3-63"><a href="#cb3-63" aria-hidden="true" tabindex="-1"></a>                                        (<span class="kw">not=</span> llama-ctx-state-id))</span>
+<span id="cb3-64"><a href="#cb3-64" aria-hidden="true" tabindex="-1"></a>                                    (<span class="kw">do</span></span>
+<span id="cb3-65"><a href="#cb3-65" aria-hidden="true" tabindex="-1"></a>                                      <span class="co">#_</span>(<span class="kw">prn</span> [<span class="at">:set-from-cache</span>])</span>
+<span id="cb3-66"><a href="#cb3-66" aria-hidden="true" tabindex="-1"></a>                                      (<span class="kw">-&gt;&gt;</span> sub-trie</span>
+<span id="cb3-67"><a href="#cb3-67" aria-hidden="true" tabindex="-1"></a>                                           <span class="at">:llama-state-id</span></span>
+<span id="cb3-68"><a href="#cb3-68" aria-hidden="true" tabindex="-1"></a>                                           (cache/lookup *cache)</span>
+<span id="cb3-69"><a href="#cb3-69" aria-hidden="true" tabindex="-1"></a>                                           (raw/llama_set_state_data llama-ctx)))</span>
+<span id="cb3-70"><a href="#cb3-70" aria-hidden="true" tabindex="-1"></a>                                    <span class="co">;; Otherwise, our current state is what we need.</span></span>
+<span id="cb3-71"><a href="#cb3-71" aria-hidden="true" tabindex="-1"></a>                                    <span class="at">:else</span></span>
+<span id="cb3-72"><a href="#cb3-72" aria-hidden="true" tabindex="-1"></a>                                    (<span class="kw">do</span> <span class="co">#_</span>(<span class="kw">prn</span> [<span class="at">:continue</span>])</span>
+<span id="cb3-73"><a href="#cb3-73" aria-hidden="true" tabindex="-1"></a>                                        <span class="va">nil</span>))</span>
+<span id="cb3-74"><a href="#cb3-74" aria-hidden="true" tabindex="-1"></a>                                  <span class="co">;; Evaluate the current token:</span></span>
+<span id="cb3-75"><a href="#cb3-75" aria-hidden="true" tabindex="-1"></a>                                  (<span class="kw">prn</span> [<span class="at">:eval</span></span>
+<span id="cb3-76"><a href="#cb3-76" aria-hidden="true" tabindex="-1"></a>                                        (path-&gt;text <span class="kw">path</span>)</span>
+<span id="cb3-77"><a href="#cb3-77" aria-hidden="true" tabindex="-1"></a>                                        <span class="at">'--&gt;</span></span>
+<span id="cb3-78"><a href="#cb3-78" aria-hidden="true" tabindex="-1"></a>                                        (llm/token-&gt;str token)])</span>
+<span id="cb3-79"><a href="#cb3-79" aria-hidden="true" tabindex="-1"></a>                                  (<span class="kw">time</span></span>
+<span id="cb3-80"><a href="#cb3-80" aria-hidden="true" tabindex="-1"></a>                                   (llama/llama-update llama-ctx</span>
+<span id="cb3-81"><a href="#cb3-81" aria-hidden="true" tabindex="-1"></a>                                                       token</span>
+<span id="cb3-82"><a href="#cb3-82" aria-hidden="true" tabindex="-1"></a>                                                       <span class="co">;; n-past</span></span>
+<span id="cb3-83"><a href="#cb3-83" aria-hidden="true" tabindex="-1"></a>                                                       (<span class="kw">-&gt;&gt;</span> <span class="kw">path</span></span>
+<span id="cb3-84"><a href="#cb3-84" aria-hidden="true" tabindex="-1"></a>                                                            (<span class="kw">filter</span> <span class="kw">number?</span>)</span>
+<span id="cb3-85"><a href="#cb3-85" aria-hidden="true" tabindex="-1"></a>                                                            <span class="kw">count</span>)</span>
+<span id="cb3-86"><a href="#cb3-86" aria-hidden="true" tabindex="-1"></a>                                                       <span class="co">;; num-threads</span></span>
+<span id="cb3-87"><a href="#cb3-87" aria-hidden="true" tabindex="-1"></a>                                                       <span class="dv">8</span>))</span>
+<span id="cb3-88"><a href="#cb3-88" aria-hidden="true" tabindex="-1"></a>                                  <span class="co">#_</span>(<span class="kw">prn</span> [<span class="at">:extract-state</span>])</span>
+<span id="cb3-89"><a href="#cb3-89" aria-hidden="true" tabindex="-1"></a>                                  llama-ctx)})</span>
+<span id="cb3-90"><a href="#cb3-90" aria-hidden="true" tabindex="-1"></a>                <span class="co">;; Create the next sub trie:</span></span>
+<span id="cb3-91"><a href="#cb3-91" aria-hidden="true" tabindex="-1"></a>                new-sub-trie (<span class="kw">merge</span> next-sub-trie</span>
+<span id="cb3-92"><a href="#cb3-92" aria-hidden="true" tabindex="-1"></a>                                    {<span class="at">:logits</span> (llama/get-logits llama-ctx)</span>
+<span id="cb3-93"><a href="#cb3-93" aria-hidden="true" tabindex="-1"></a>                                     <span class="at">:llama-state-id</span> state-id})]</span>
+<span id="cb3-94"><a href="#cb3-94" aria-hidden="true" tabindex="-1"></a>            <span class="co">;; Step into the next sub trie:</span></span>
+<span id="cb3-95"><a href="#cb3-95" aria-hidden="true" tabindex="-1"></a>            (<span class="kw">do</span> <span class="co">#_</span>(<span class="kw">prn</span> [<span class="at">:recur-new</span> (path-&gt;text next-path)])</span>
+<span id="cb3-96"><a href="#cb3-96" aria-hidden="true" tabindex="-1"></a>                (<span class="kw">recur</span> (<span class="kw">-&gt;</span> context</span>
+<span id="cb3-97"><a href="#cb3-97" aria-hidden="true" tabindex="-1"></a>                           (<span class="kw">update</span> <span class="at">:trie</span> <span class="kw">assoc-in</span> next-path new-sub-trie)</span>
+<span id="cb3-98"><a href="#cb3-98" aria-hidden="true" tabindex="-1"></a>                           (<span class="kw">assoc</span> <span class="at">:llama-ctx-state-id</span> state-id</span>
+<span id="cb3-99"><a href="#cb3-99" aria-hidden="true" tabindex="-1"></a>                                  <span class="at">:sub-trie</span> new-sub-trie</span>
+<span id="cb3-100"><a href="#cb3-100" aria-hidden="true" tabindex="-1"></a>                                  <span class="at">:path</span> next-path</span>
+<span id="cb3-101"><a href="#cb3-101" aria-hidden="true" tabindex="-1"></a>                                  <span class="at">:remaining-tokens</span> (<span class="kw">rest</span> remaining-tokens)</span>
+<span id="cb3-102"><a href="#cb3-102" aria-hidden="true" tabindex="-1"></a>                                  <span class="at">:logits</span> (<span class="at">:logits</span> new-sub-trie)))))))))))</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+<p>Here is how we create a context map to be passed to the evaluation:</p>
+<div class="sourceClojure">
+<div class="sourceCode" id="cb4"><pre class="sourceCode clojure code-with-copy"><code class="sourceCode clojure"><span id="cb4-1"><a href="#cb4-1" aria-hidden="true" tabindex="-1"></a>(<span class="bu">defn</span><span class="fu"> new-context</span></span>
+<span id="cb4-2"><a href="#cb4-2" aria-hidden="true" tabindex="-1"></a>  ([]</span>
+<span id="cb4-3"><a href="#cb4-3" aria-hidden="true" tabindex="-1"></a>   (new-context {}))</span>
+<span id="cb4-4"><a href="#cb4-4" aria-hidden="true" tabindex="-1"></a>  ([{<span class="at">:keys</span> [seed]</span>
+<span id="cb4-5"><a href="#cb4-5" aria-hidden="true" tabindex="-1"></a>     <span class="at">:or</span> {seed <span class="dv">12345</span>}}]</span>
+<span id="cb4-6"><a href="#cb4-6" aria-hidden="true" tabindex="-1"></a>   (System/gc)</span>
+<span id="cb4-7"><a href="#cb4-7" aria-hidden="true" tabindex="-1"></a>   (<span class="kw">let</span> [llama-ctx (llm/new-llama-ctx)</span>
+<span id="cb4-8"><a href="#cb4-8" aria-hidden="true" tabindex="-1"></a>         samplef (llama/init-mirostat-v2-sampler</span>
+<span id="cb4-9"><a href="#cb4-9" aria-hidden="true" tabindex="-1"></a>                  llama-ctx)]</span>
+<span id="cb4-10"><a href="#cb4-10" aria-hidden="true" tabindex="-1"></a>     (<span class="kw">prn</span> [<span class="at">:seed</span> seed])</span>
+<span id="cb4-11"><a href="#cb4-11" aria-hidden="true" tabindex="-1"></a>     (raw/llama_set_rng_seed llama-ctx seed)</span>
+<span id="cb4-12"><a href="#cb4-12" aria-hidden="true" tabindex="-1"></a>     {<span class="at">:llama-ctx</span> llama-ctx</span>
+<span id="cb4-13"><a href="#cb4-13" aria-hidden="true" tabindex="-1"></a>      <span class="at">:samplef</span> samplef</span>
+<span id="cb4-14"><a href="#cb4-14" aria-hidden="true" tabindex="-1"></a>      <span class="at">:trie</span> {}</span>
+<span id="cb4-15"><a href="#cb4-15" aria-hidden="true" tabindex="-1"></a>      :*cache (<span class="kw">atom</span> (cache/new-fifo-cache))})))</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+<p>Given an atom holding a context map, we may update it with a given cached evaluation. Note that we do not keep all the fields of the context map. Some of them (e.g., <code>:sub-trie</code>) were used for the recursive evaluation and need to be discarded (using <code>select-keys</code>) to avoid affecting the next evaluation.</p>
+<div class="sourceClojure">
+<div class="sourceCode" id="cb5"><pre class="sourceCode clojure code-with-copy"><code class="sourceCode clojure"><span id="cb5-1"><a href="#cb5-1" aria-hidden="true" tabindex="-1"></a>(<span class="bu">defn</span><span class="fu"> cached-eval! </span>[*context tokens]</span>
+<span id="cb5-2"><a href="#cb5-2" aria-hidden="true" tabindex="-1"></a>  (<span class="kw">let</span> [context (<span class="kw">-&gt;</span> <span class="at">@*context</span></span>
+<span id="cb5-3"><a href="#cb5-3" aria-hidden="true" tabindex="-1"></a>                    (<span class="kw">assoc</span> <span class="at">:tokens</span> tokens)</span>
+<span id="cb5-4"><a href="#cb5-4" aria-hidden="true" tabindex="-1"></a>                    cached-eval)]</span>
+<span id="cb5-5"><a href="#cb5-5" aria-hidden="true" tabindex="-1"></a>    (<span class="kw">reset!</span> *context</span>
+<span id="cb5-6"><a href="#cb5-6" aria-hidden="true" tabindex="-1"></a>            (<span class="kw">select-keys</span> context [<span class="at">:llama-ctx</span> :*cache <span class="at">:samplef</span> <span class="at">:trie</span> <span class="at">:logits</span>]))</span>
+<span id="cb5-7"><a href="#cb5-7" aria-hidden="true" tabindex="-1"></a>    context))</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+<p>Typically, we not only update the model with a sequence of tokens, but are also interested in the model logits for the next token.</p>
+<div class="sourceClojure">
+<div class="sourceCode" id="cb6"><pre class="sourceCode clojure code-with-copy"><code class="sourceCode clojure"><span id="cb6-1"><a href="#cb6-1" aria-hidden="true" tabindex="-1"></a>(<span class="bu">defn</span><span class="fu"> logits! </span>[*context tokens]</span>
+<span id="cb6-2"><a href="#cb6-2" aria-hidden="true" tabindex="-1"></a>  (<span class="kw">-&gt;</span> *context</span>
+<span id="cb6-3"><a href="#cb6-3" aria-hidden="true" tabindex="-1"></a>      (cached-eval! tokens)</span>
+<span id="cb6-4"><a href="#cb6-4" aria-hidden="true" tabindex="-1"></a>      <span class="at">:logits</span>))</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+<p>For example, let us pick the tokens with highest logits (that is, the most probable tokens) following a few texts:</p>
+<div class="sourceClojure">
+<div class="sourceCode" id="cb7"><pre class="sourceCode clojure code-with-copy"><code class="sourceCode clojure"><span id="cb7-1"><a href="#cb7-1" aria-hidden="true" tabindex="-1"></a>(<span class="kw">delay</span></span>
+<span id="cb7-2"><a href="#cb7-2" aria-hidden="true" tabindex="-1"></a>  (<span class="kw">let</span> [*context (<span class="kw">atom</span> (new-context))]</span>
+<span id="cb7-3"><a href="#cb7-3" aria-hidden="true" tabindex="-1"></a>    (<span class="kw">-&gt;&gt;</span> [<span class="st">"How are"</span></span>
+<span id="cb7-4"><a href="#cb7-4" aria-hidden="true" tabindex="-1"></a>          <span class="st">"How much wood would a"</span></span>
+<span id="cb7-5"><a href="#cb7-5" aria-hidden="true" tabindex="-1"></a>          <span class="st">"How much wood could a"</span>]</span>
+<span id="cb7-6"><a href="#cb7-6" aria-hidden="true" tabindex="-1"></a>         (<span class="kw">mapv</span> (<span class="kw">fn</span> [text]</span>
+<span id="cb7-7"><a href="#cb7-7" aria-hidden="true" tabindex="-1"></a>                 [text <span class="at">'--&gt;</span> (<span class="kw">-&gt;&gt;</span> text</span>
+<span id="cb7-8"><a href="#cb7-8" aria-hidden="true" tabindex="-1"></a>                                 llm/tokenize</span>
+<span id="cb7-9"><a href="#cb7-9" aria-hidden="true" tabindex="-1"></a>                                 (logits! *context)</span>
+<span id="cb7-10"><a href="#cb7-10" aria-hidden="true" tabindex="-1"></a>                                 argops/argmax</span>
+<span id="cb7-11"><a href="#cb7-11" aria-hidden="true" tabindex="-1"></a>                                 llm/token-&gt;str)]))</span>
+<span id="cb7-12"><a href="#cb7-12" aria-hidden="true" tabindex="-1"></a>         kind/fragment)))</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+<div class="printedClojure">
+<div class="sourceCode" id="cb8"><pre class="sourceCode clojure code-with-copy"><code class="sourceCode clojure"><span id="cb8-1"><a href="#cb8-1" aria-hidden="true" tabindex="-1"></a>[<span class="st">"How are"</span> --&amp;gt<span class="co">; " you"]</span></span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+<div class="printedClojure">
+<div class="sourceCode" id="cb9"><pre class="sourceCode clojure code-with-copy"><code class="sourceCode clojure"><span id="cb9-1"><a href="#cb9-1" aria-hidden="true" tabindex="-1"></a>[<span class="st">"How much wood would a"</span> --&amp;gt<span class="co">; " wood"]</span></span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+<div class="printedClojure">
+<div class="sourceCode" id="cb10"><pre class="sourceCode clojure code-with-copy"><code class="sourceCode clojure"><span id="cb10-1"><a href="#cb10-1" aria-hidden="true" tabindex="-1"></a>[<span class="st">"How much wood could a"</span> --&amp;gt<span class="co">; " wood"]</span></span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+</section>
+<section id="visualising-the-trie" class="level2" data-number="6.2">
+<h2 data-number="6.2" class="anchored" data-anchor-id="visualising-the-trie"><span class="header-section-number">6.2</span> Visualising the trie</h2>
+<div class="sourceClojure">
+<div class="sourceCode" id="cb11"><pre class="sourceCode clojure code-with-copy"><code class="sourceCode clojure"><span id="cb11-1"><a href="#cb11-1" aria-hidden="true" tabindex="-1"></a>(<span class="bu">defn</span><span class="fu"> visualize-trie </span>[context]</span>
+<span id="cb11-2"><a href="#cb11-2" aria-hidden="true" tabindex="-1"></a>  (<span class="kw">let</span> [{<span class="at">:keys</span> [*cache trie]} context</span>
+<span id="cb11-3"><a href="#cb11-3" aria-hidden="true" tabindex="-1"></a>        *node-id (<span class="kw">atom</span> <span class="dv">0</span>)</span>
+<span id="cb11-4"><a href="#cb11-4" aria-hidden="true" tabindex="-1"></a>        *nodes (<span class="kw">atom</span> [{<span class="at">:data</span> {<span class="at">:id</span> <span class="st">"0"</span> <span class="at">:word</span> <span class="st">"(root)"</span>}}])</span>
+<span id="cb11-5"><a href="#cb11-5" aria-hidden="true" tabindex="-1"></a>        *edges (<span class="kw">atom</span> [])</span>
+<span id="cb11-6"><a href="#cb11-6" aria-hidden="true" tabindex="-1"></a>        trie (<span class="kw">-&gt;</span> trie</span>
+<span id="cb11-7"><a href="#cb11-7" aria-hidden="true" tabindex="-1"></a>                 (<span class="kw">assoc</span> <span class="at">:node-id</span> (<span class="kw">str</span> <span class="at">@*node-id</span>))</span>
+<span id="cb11-8"><a href="#cb11-8" aria-hidden="true" tabindex="-1"></a>                 (<span class="kw">-&gt;&gt;</span> (walk/prewalk</span>
+<span id="cb11-9"><a href="#cb11-9" aria-hidden="true" tabindex="-1"></a>                       (<span class="kw">fn</span> [v]</span>
+<span id="cb11-10"><a href="#cb11-10" aria-hidden="true" tabindex="-1"></a>                         (<span class="kw">if</span> (<span class="at">:children</span> v)</span>
+<span id="cb11-11"><a href="#cb11-11" aria-hidden="true" tabindex="-1"></a>                           (<span class="kw">-&gt;</span> v</span>
+<span id="cb11-12"><a href="#cb11-12" aria-hidden="true" tabindex="-1"></a>                               (<span class="kw">update</span></span>
+<span id="cb11-13"><a href="#cb11-13" aria-hidden="true" tabindex="-1"></a>                                <span class="at">:children</span></span>
+<span id="cb11-14"><a href="#cb11-14" aria-hidden="true" tabindex="-1"></a>                                (<span class="kw">fn</span> [<span class="kw">children</span>]</span>
+<span id="cb11-15"><a href="#cb11-15" aria-hidden="true" tabindex="-1"></a>                                  (<span class="kw">-&gt;&gt;</span> <span class="kw">children</span></span>
+<span id="cb11-16"><a href="#cb11-16" aria-hidden="true" tabindex="-1"></a>                                       (<span class="kw">map</span></span>
+<span id="cb11-17"><a href="#cb11-17" aria-hidden="true" tabindex="-1"></a>                                        (<span class="kw">fn</span> [[token child]]</span>
+<span id="cb11-18"><a href="#cb11-18" aria-hidden="true" tabindex="-1"></a>                                          (<span class="kw">let</span> [node-id (<span class="kw">str</span> (<span class="kw">swap!</span> *node-id <span class="kw">inc</span>))]</span>
+<span id="cb11-19"><a href="#cb11-19" aria-hidden="true" tabindex="-1"></a>                                            (<span class="kw">swap!</span></span>
+<span id="cb11-20"><a href="#cb11-20" aria-hidden="true" tabindex="-1"></a>                                             *nodes</span>
+<span id="cb11-21"><a href="#cb11-21" aria-hidden="true" tabindex="-1"></a>                                             <span class="kw">conj</span></span>
+<span id="cb11-22"><a href="#cb11-22" aria-hidden="true" tabindex="-1"></a>                                             {<span class="at">:data</span> {<span class="at">:id</span> node-id</span>
+<span id="cb11-23"><a href="#cb11-23" aria-hidden="true" tabindex="-1"></a>                                                     <span class="at">:token</span> token</span>
+<span id="cb11-24"><a href="#cb11-24" aria-hidden="true" tabindex="-1"></a>                                                     <span class="at">:word</span> (llm/token-&gt;str token)</span>
+<span id="cb11-25"><a href="#cb11-25" aria-hidden="true" tabindex="-1"></a>                                                     <span class="at">:background</span> (<span class="kw">if</span> (<span class="kw">-&gt;&gt;</span> child</span>
+<span id="cb11-26"><a href="#cb11-26" aria-hidden="true" tabindex="-1"></a>                                                                          <span class="at">:llama-state-id</span></span>
+<span id="cb11-27"><a href="#cb11-27" aria-hidden="true" tabindex="-1"></a>                                                                          (cache/has? *cache))</span>
+<span id="cb11-28"><a href="#cb11-28" aria-hidden="true" tabindex="-1"></a>                                                                   <span class="st">"lightgreen"</span></span>
+<span id="cb11-29"><a href="#cb11-29" aria-hidden="true" tabindex="-1"></a>                                                                   <span class="st">"lightgrey"</span>)}})</span>
+<span id="cb11-30"><a href="#cb11-30" aria-hidden="true" tabindex="-1"></a>                                            [token (<span class="kw">-&gt;</span> child</span>
+<span id="cb11-31"><a href="#cb11-31" aria-hidden="true" tabindex="-1"></a>                                                       (<span class="kw">assoc</span> <span class="at">:node-id</span> node-id))])))</span>
+<span id="cb11-32"><a href="#cb11-32" aria-hidden="true" tabindex="-1"></a>                                       (<span class="kw">into</span> {})))))</span>
+<span id="cb11-33"><a href="#cb11-33" aria-hidden="true" tabindex="-1"></a>                           v)))</span>
+<span id="cb11-34"><a href="#cb11-34" aria-hidden="true" tabindex="-1"></a>                      (walk/prewalk (<span class="kw">fn</span> [v]</span>
+<span id="cb11-35"><a href="#cb11-35" aria-hidden="true" tabindex="-1"></a>                                      (<span class="kw">if</span> (<span class="at">:logits</span> v)</span>
+<span id="cb11-36"><a href="#cb11-36" aria-hidden="true" tabindex="-1"></a>                                        (<span class="kw">dissoc</span> v <span class="at">:logits</span>)</span>
+<span id="cb11-37"><a href="#cb11-37" aria-hidden="true" tabindex="-1"></a>                                        v)))</span>
+<span id="cb11-38"><a href="#cb11-38" aria-hidden="true" tabindex="-1"></a>                      (walk/prewalk</span>
+<span id="cb11-39"><a href="#cb11-39" aria-hidden="true" tabindex="-1"></a>                       (<span class="kw">fn</span> [v]</span>
+<span id="cb11-40"><a href="#cb11-40" aria-hidden="true" tabindex="-1"></a>                         (<span class="kw">if-let</span> [{<span class="at">:keys</span> [node-id]} v]</span>
+<span id="cb11-41"><a href="#cb11-41" aria-hidden="true" tabindex="-1"></a>                           (<span class="kw">do</span></span>
+<span id="cb11-42"><a href="#cb11-42" aria-hidden="true" tabindex="-1"></a>                             (<span class="kw">-&gt;&gt;</span> v</span>
+<span id="cb11-43"><a href="#cb11-43" aria-hidden="true" tabindex="-1"></a>                                  <span class="at">:children</span></span>
+<span id="cb11-44"><a href="#cb11-44" aria-hidden="true" tabindex="-1"></a>                                  <span class="kw">vals</span></span>
+<span id="cb11-45"><a href="#cb11-45" aria-hidden="true" tabindex="-1"></a>                                  (<span class="kw">map</span></span>
+<span id="cb11-46"><a href="#cb11-46" aria-hidden="true" tabindex="-1"></a>                                   (<span class="kw">fn</span> [child]</span>
+<span id="cb11-47"><a href="#cb11-47" aria-hidden="true" tabindex="-1"></a>                                     (<span class="kw">let</span> [child-node-id (<span class="at">:node-id</span> child)]</span>
+<span id="cb11-48"><a href="#cb11-48" aria-hidden="true" tabindex="-1"></a>                                       {<span class="at">:data</span> {<span class="at">:id</span> (<span class="kw">str</span> node-id <span class="st">"-"</span> child-node-id)</span>
+<span id="cb11-49"><a href="#cb11-49" aria-hidden="true" tabindex="-1"></a>                                               <span class="at">:source</span> node-id</span>
+<span id="cb11-50"><a href="#cb11-50" aria-hidden="true" tabindex="-1"></a>                                               <span class="at">:target</span> child-node-id}})))</span>
+<span id="cb11-51"><a href="#cb11-51" aria-hidden="true" tabindex="-1"></a>                                  (<span class="kw">swap!</span> *edges <span class="kw">concat</span>))</span>
+<span id="cb11-52"><a href="#cb11-52" aria-hidden="true" tabindex="-1"></a>                             v)</span>
+<span id="cb11-53"><a href="#cb11-53" aria-hidden="true" tabindex="-1"></a>                           v)))))]</span>
+<span id="cb11-54"><a href="#cb11-54" aria-hidden="true" tabindex="-1"></a>    (kind/cytoscape</span>
+<span id="cb11-55"><a href="#cb11-55" aria-hidden="true" tabindex="-1"></a>     {<span class="co">;:trie trie</span></span>
+<span id="cb11-56"><a href="#cb11-56" aria-hidden="true" tabindex="-1"></a>      <span class="at">:elements</span> {<span class="at">:nodes</span> <span class="at">@*nodes</span></span>
+<span id="cb11-57"><a href="#cb11-57" aria-hidden="true" tabindex="-1"></a>                 <span class="at">:edges</span> <span class="at">@*edges</span>}</span>
+<span id="cb11-58"><a href="#cb11-58" aria-hidden="true" tabindex="-1"></a>      <span class="at">:style</span> [{<span class="at">:selector</span> <span class="st">"node"</span></span>
+<span id="cb11-59"><a href="#cb11-59" aria-hidden="true" tabindex="-1"></a>               <span class="at">:css</span> {<span class="at">:content</span> <span class="st">"data(word)"</span></span>
+<span id="cb11-60"><a href="#cb11-60" aria-hidden="true" tabindex="-1"></a>                     <span class="at">:text-valign</span> <span class="st">"center"</span></span>
+<span id="cb11-61"><a href="#cb11-61" aria-hidden="true" tabindex="-1"></a>                     <span class="at">:text-halign</span> <span class="st">"center"</span></span>
+<span id="cb11-62"><a href="#cb11-62" aria-hidden="true" tabindex="-1"></a>                     <span class="at">:height</span> <span class="dv">50</span></span>
+<span id="cb11-63"><a href="#cb11-63" aria-hidden="true" tabindex="-1"></a>                     <span class="at">:width</span> <span class="dv">50</span></span>
+<span id="cb11-64"><a href="#cb11-64" aria-hidden="true" tabindex="-1"></a>                     <span class="at">:background-color</span> <span class="st">"data(background)"</span>}}</span>
+<span id="cb11-65"><a href="#cb11-65" aria-hidden="true" tabindex="-1"></a>              {<span class="at">:selector</span> <span class="st">"edge"</span></span>
+<span id="cb11-66"><a href="#cb11-66" aria-hidden="true" tabindex="-1"></a>               <span class="at">:css</span> {<span class="at">:curve-style</span> <span class="st">"bezier"</span></span>
+<span id="cb11-67"><a href="#cb11-67" aria-hidden="true" tabindex="-1"></a>                     <span class="at">:target-arrow-shape</span> <span class="st">"triangle"</span>}}]</span>
+<span id="cb11-68"><a href="#cb11-68" aria-hidden="true" tabindex="-1"></a>      <span class="at">:layout</span> {<span class="at">:name</span> <span class="st">"cose"</span>}})))</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+<p>For example, let us run a few “next token” tasks as above, but this time, also visualize the reulting trie.</p>
+<div class="sourceClojure">
+<div class="sourceCode" id="cb12"><pre class="sourceCode clojure code-with-copy"><code class="sourceCode clojure"><span id="cb12-1"><a href="#cb12-1" aria-hidden="true" tabindex="-1"></a>(<span class="kw">delay</span></span>
+<span id="cb12-2"><a href="#cb12-2" aria-hidden="true" tabindex="-1"></a>  (<span class="kw">let</span> [*context (<span class="kw">atom</span> (new-context))]</span>
+<span id="cb12-3"><a href="#cb12-3" aria-hidden="true" tabindex="-1"></a>    (kind/fragment</span>
+<span id="cb12-4"><a href="#cb12-4" aria-hidden="true" tabindex="-1"></a>     [(<span class="kw">-&gt;&gt;</span> [<span class="st">"How are"</span></span>
+<span id="cb12-5"><a href="#cb12-5" aria-hidden="true" tabindex="-1"></a>            <span class="st">"How much wood would a"</span></span>
+<span id="cb12-6"><a href="#cb12-6" aria-hidden="true" tabindex="-1"></a>            <span class="st">"How much wood could a"</span>]</span>
+<span id="cb12-7"><a href="#cb12-7" aria-hidden="true" tabindex="-1"></a>           (<span class="kw">mapv</span> (<span class="kw">fn</span> [text]</span>
+<span id="cb12-8"><a href="#cb12-8" aria-hidden="true" tabindex="-1"></a>                   [text <span class="at">'--&gt;</span> (<span class="kw">-&gt;&gt;</span> text</span>
+<span id="cb12-9"><a href="#cb12-9" aria-hidden="true" tabindex="-1"></a>                                   llm/tokenize</span>
+<span id="cb12-10"><a href="#cb12-10" aria-hidden="true" tabindex="-1"></a>                                   (logits! *context)</span>
+<span id="cb12-11"><a href="#cb12-11" aria-hidden="true" tabindex="-1"></a>                                   argops/argmax</span>
+<span id="cb12-12"><a href="#cb12-12" aria-hidden="true" tabindex="-1"></a>                                   llm/token-&gt;str)])))</span>
+<span id="cb12-13"><a href="#cb12-13" aria-hidden="true" tabindex="-1"></a>      (visualize-trie <span class="at">@*context</span>)])))</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+<div class="printedClojure">
+<div class="sourceCode" id="cb13"><pre class="sourceCode clojure code-with-copy"><code class="sourceCode clojure"><span id="cb13-1"><a href="#cb13-1" aria-hidden="true" tabindex="-1"></a>[[<span class="st">"How are"</span> --&amp;gt<span class="co">; " you"]</span></span>
+<span id="cb13-2"><a href="#cb13-2" aria-hidden="true" tabindex="-1"></a> [<span class="st">"How much wood would a"</span> --&amp;gt<span class="co">; " wood"]</span></span>
+<span id="cb13-3"><a href="#cb13-3" aria-hidden="true" tabindex="-1"></a> [<span class="st">"How much wood could a"</span> --&amp;gt<span class="co">; " wood"]]</span></span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+<div style="height:400px;width:400px;"><script>
+{
+  value = {"elements":{"nodes":[{"data":{"id":"0","word":"(root)"}},{"data":{"id":"1","token":5328,"word":"How","background":"lightgreen"}},{"data":{"id":"2","token":526,"word":" are","background":"lightgreen"}},{"data":{"id":"3","token":1568,"word":" much","background":"lightgreen"}},{"data":{"id":"4","token":8112,"word":" wood","background":"lightgreen"}},{"data":{"id":"5","token":723,"word":" would","background":"lightgreen"}},{"data":{"id":"6","token":1033,"word":" could","background":"lightgreen"}},{"data":{"id":"7","token":263,"word":" a","background":"lightgreen"}},{"data":{"id":"8","token":263,"word":" a","background":"lightgreen"}}],"edges":[{"data":{"id":"0-1","source":"0","target":"1"}},{"data":{"id":"1-2","source":"1","target":"2"}},{"data":{"id":"1-3","source":"1","target":"3"}},{"data":{"id":"3-4","source":"3","target":"4"}},{"data":{"id":"4-5","source":"4","target":"5"}},{"data":{"id":"4-6","source":"4","target":"6"}},{"data":{"id":"5-7","source":"5","target":"7"}},{"data":{"id":"6-8","source":"6","target":"8"}}]},"style":[{"selector":"node","css":{"content":"data(word)","text-valign":"center","text-halign":"center","height":50,"width":50,"background-color":"data(background)"}},{"selector":"edge","css":{"curve-style":"bezier","target-arrow-shape":"triangle"}}],"layout":{"name":"cose"}};
+  value['container'] = document.currentScript.parentElement;
+  cytoscape(value);
+};</script></div>
+<p>Here is a bigger example. Note that some nodes are no longer in the cache and are thus coloured differently. (<a href="https://en.wikipedia.org/wiki/Groundhog">Source</a>)</p>
+<div class="sourceClojure">
+<div class="sourceCode" id="cb14"><pre class="sourceCode clojure code-with-copy"><code class="sourceCode clojure"><span id="cb14-1"><a href="#cb14-1" aria-hidden="true" tabindex="-1"></a>(<span class="kw">delay</span></span>
+<span id="cb14-2"><a href="#cb14-2" aria-hidden="true" tabindex="-1"></a>  (<span class="kw">let</span> [*context (<span class="kw">atom</span> (new-context))]</span>
+<span id="cb14-3"><a href="#cb14-3" aria-hidden="true" tabindex="-1"></a>    (<span class="kw">-&gt;&gt;</span> [<span class="st">"The groundhog (Marmota monax), also known as the woodchuck, is a rodent of the family Sciuridae, belonging to the group of large ground squirrels known as marmots. The groundhog is a lowland creature of North America; it is found through much of the Eastern United States, across Canada and into Alaska. It was first scientifically described by Carl Linnaeus in 1758."</span></span>
+<span id="cb14-4"><a href="#cb14-4" aria-hidden="true" tabindex="-1"></a>          <span class="st">"The groundhog is also referred to as a chuck, wood-shock, groundpig, whistlepig, whistler, thickwood badger, Canada marmot, monax, moonack, weenusk, red monk, land beaver, and, among French Canadians in eastern Canada, siffleux. The name </span><span class="sc">\"</span><span class="st">thickwood badger</span><span class="sc">\"</span><span class="st"> was given in the Northwest to distinguish the animal from the prairie badger. Monax (Móonack) is an Algonquian name of the woodchuck, which means </span><span class="sc">\"</span><span class="st">digger</span><span class="sc">\"</span><span class="st"> (cf. Lenape monachgeu). Young groundhogs may be called chucklings. "</span></span>
+<span id="cb14-5"><a href="#cb14-5" aria-hidden="true" tabindex="-1"></a>          <span class="st">"The groundhog did visit me yesterday."</span></span>
+<span id="cb14-6"><a href="#cb14-6" aria-hidden="true" tabindex="-1"></a>          <span class="st">"The groundhog is also referred to as Margaret. At least that is how they call her in our neighbourhood."</span>]</span>
+<span id="cb14-7"><a href="#cb14-7" aria-hidden="true" tabindex="-1"></a>         (run! (<span class="kw">fn</span> [text]</span>
+<span id="cb14-8"><a href="#cb14-8" aria-hidden="true" tabindex="-1"></a>                 (<span class="kw">-&gt;&gt;</span> text</span>
+<span id="cb14-9"><a href="#cb14-9" aria-hidden="true" tabindex="-1"></a>                      llm/tokenize</span>
+<span id="cb14-10"><a href="#cb14-10" aria-hidden="true" tabindex="-1"></a>                      (logits! *context)</span>
+<span id="cb14-11"><a href="#cb14-11" aria-hidden="true" tabindex="-1"></a>                      argops/argmax</span>
+<span id="cb14-12"><a href="#cb14-12" aria-hidden="true" tabindex="-1"></a>                      llm/token-&gt;str))))</span>
+<span id="cb14-13"><a href="#cb14-13" aria-hidden="true" tabindex="-1"></a>    (visualize-trie <span class="at">@*context</span>)))</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+<div style="height:400px;width:400px;"><script>
+{
+  value = {"elements":{"nodes":[{"data":{"id":"0","word":"(root)"}},{"data":{"id":"1","token":1576,"word":"The","background":"lightgreen"}},{"data":{"id":"2","token":5962,"word":" ground","background":"lightgreen"}},{"data":{"id":"3","token":29882,"word":"h","background":"lightgreen"}},{"data":{"id":"4","token":468,"word":"og","background":"lightgreen"}},{"data":{"id":"5","token":313,"word":" (","background":"lightgrey"}},{"data":{"id":"6","token":338,"word":" is","background":"lightgreen"}},{"data":{"id":"7","token":1258,"word":" did","background":"lightgreen"}},{"data":{"id":"8","token":29924,"word":"M","background":"lightgrey"}},{"data":{"id":"9","token":2817,"word":"arm","background":"lightgrey"}},{"data":{"id":"10","token":4616,"word":"ota","background":"lightgrey"}},{"data":{"id":"11","token":1601,"word":" mon","background":"lightgrey"}},{"data":{"id":"12","token":1165,"word":"ax","background":"lightgrey"}},{"data":{"id":"13","token":511,"word":"),","background":"lightgrey"}},{"data":{"id":"14","token":884,"word":" also","background":"lightgrey"}},{"data":{"id":"15","token":2998,"word":" known","background":"lightgrey"}},{"data":{"id":"16","token":408,"word":" as","background":"lightgrey"}},{"data":{"id":"17","token":278,"word":" the","background":"lightgrey"}},{"data":{"id":"18","token":8112,"word":" wood","background":"lightgrey"}},{"data":{"id":"19","token":305,"word":"ch","background":"lightgrey"}},{"data":{"id":"20","token":2707,"word":"uck","background":"lightgrey"}},{"data":{"id":"21","token":29892,"word":",","background":"lightgrey"}},{"data":{"id":"22","token":338,"word":" is","background":"lightgrey"}},{"data":{"id":"23","token":263,"word":" a","background":"lightgrey"}},{"data":{"id":"24","token":15382,"word":" rod","background":"lightgrey"}},{"data":{"id":"25","token":296,"word":"ent","background":"lightgrey"}},{"data":{"id":"26","token":310,"word":" of","background":"lightgrey"}},{"data":{"id":"27","token":278,"word":" the","background":"lightgrey"}},{"data":{"id":"28","token":3942,"word":" family","background":"lightgrey"}},{"data":{"id":"29","token":5636,"word":" Sci","background":"lightgrey"}},{"data":{"id":"30","token":332,"word":"ur","background":"lightgrey"}},{"data":{"id":"31","token":3898,"word":"idae","background":"lightgrey"}},{"data":{"id":"32","token":29892,"word":",","background":"lightgrey"}},{"data":{"id":"33","token":23329,"word":" belonging","background":"lightgrey"}},{"data":{"id":"34","token":304,"word":" to","background":"lightgrey"}},{"data":{"id":"35","token":278,"word":" the","background":"lightgrey"}},{"data":{"id":"36","token":2318,"word":" group","background":"lightgrey"}},{"data":{"id":"37","token":310,"word":" of","background":"lightgrey"}},{"data":{"id":"38","token":2919,"word":" large","background":"lightgrey"}},{"data":{"id":"39","token":5962,"word":" ground","background":"lightgrey"}},{"data":{"id":"40","token":10674,"word":" squ","background":"lightgrey"}},{"data":{"id":"41","token":381,"word":"ir","background":"lightgrey"}},{"data":{"id":"42","token":2674,"word":"rel","background":"lightgrey"}},{"data":{"id":"43","token":29879,"word":"s","background":"lightgrey"}},{"data":{"id":"44","token":2998,"word":" known","background":"lightgrey"}},{"data":{"id":"45","token":408,"word":" as","background":"lightgrey"}},{"data":{"id":"46","token":1766,"word":" mar","background":"lightgrey"}},{"data":{"id":"47","token":29885,"word":"m","background":"lightgrey"}},{"data":{"id":"48","token":1862,"word":"ots","background":"lightgrey"}},{"data":{"id":"49","token":29889,"word":".","background":"lightgrey"}},{"data":{"id":"50","token":450,"word":" The","background":"lightgrey"}},{"data":{"id":"51","token":5962,"word":" ground","background":"lightgrey"}},{"data":{"id":"52","token":29882,"word":"h","background":"lightgrey"}},{"data":{"id":"53","token":468,"word":"og","background":"lightgrey"}},{"data":{"id":"54","token":338,"word":" is","background":"lightgrey"}},{"data":{"id":"55","token":263,"word":" a","background":"lightgrey"}},{"data":{"id":"56","token":4482,"word":" low","background":"lightgrey"}},{"data":{"id":"57","token":1049,"word":"land","background":"lightgrey"}},{"data":{"id":"58","token":23940,"word":" creature","background":"lightgrey"}},{"data":{"id":"59","token":310,"word":" of","background":"lightgrey"}},{"data":{"id":"60","token":4644,"word":" North","background":"lightgrey"}},{"data":{"id":"61","token":6813,"word":" America","background":"lightgrey"}},{"data":{"id":"62","token":29936,"word":";","background":"lightgrey"}},{"data":{"id":"63","token":372,"word":" it","background":"lightgrey"}},{"data":{"id":"64","token":338,"word":" is","background":"lightgrey"}},{"data":{"id":"65","token":1476,"word":" found","background":"lightgrey"}},{"data":{"id":"66","token":1549,"word":" through","background":"lightgrey"}},{"data":{"id":"67","token":1568,"word":" much","background":"lightgrey"}},{"data":{"id":"68","token":310,"word":" of","background":"lightgrey"}},{"data":{"id":"69","token":278,"word":" the","background":"lightgrey"}},{"data":{"id":"70","token":16162,"word":" Eastern","background":"lightgrey"}},{"data":{"id":"71","token":3303,"word":" United","background":"lightgrey"}},{"data":{"id":"72","token":3900,"word":" States","background":"lightgrey"}},{"data":{"id":"73","token":29892,"word":",","background":"lightgrey"}},{"data":{"id":"74","token":4822,"word":" across","background":"lightgrey"}},{"data":{"id":"75","token":7400,"word":" Canada","background":"lightgrey"}},{"data":{"id":"76","token":322,"word":" and","background":"lightgrey"}},{"data":{"id":"77","token":964,"word":" into","background":"lightgrey"}},{"data":{"id":"78","token":838,"word":" Al","background":"lightgrey"}},{"data":{"id":"79","token":16191,"word":"aska","background":"lightgrey"}},{"data":{"id":"80","token":29889,"word":".","background":"lightgrey"}},{"data":{"id":"81","token":739,"word":" It","background":"lightgrey"}},{"data":{"id":"82","token":471,"word":" was","background":"lightgrey"}},{"data":{"id":"83","token":937,"word":" first","background":"lightgrey"}},{"data":{"id":"84","token":16021,"word":" scientific","background":"lightgrey"}},{"data":{"id":"85","token":635,"word":"ally","background":"lightgrey"}},{"data":{"id":"86","token":5439,"word":" described","background":"lightgrey"}},{"data":{"id":"87","token":491,"word":" by","background":"lightgrey"}},{"data":{"id":"88","token":8965,"word":" Carl","background":"lightgrey"}},{"data":{"id":"89","token":4342,"word":" Lin","background":"lightgrey"}},{"data":{"id":"90","token":1056,"word":"na","background":"lightgrey"}},{"data":{"id":"91","token":21477,"word":"eus","background":"lightgrey"}},{"data":{"id":"92","token":297,"word":" in","background":"lightgrey"}},{"data":{"id":"93","token":29871,"word":" ","background":"lightgrey"}},{"data":{"id":"94","token":29896,"word":"1","background":"lightgrey"}},{"data":{"id":"95","token":29955,"word":"7","background":"lightgrey"}},{"data":{"id":"96","token":29945,"word":"5","background":"lightgrey"}},{"data":{"id":"97","token":29947,"word":"8","background":"lightgrey"}},{"data":{"id":"98","token":29889,"word":".","background":"lightgrey"}},{"data":{"id":"99","token":884,"word":" also","background":"lightgreen"}},{"data":{"id":"100","token":12992,"word":" referred","background":"lightgreen"}},{"data":{"id":"101","token":304,"word":" to","background":"lightgreen"}},{"data":{"id":"102","token":408,"word":" as","background":"lightgreen"}},{"data":{"id":"103","token":263,"word":" a","background":"lightgrey"}},{"data":{"id":"104","token":18364,"word":" Margaret","background":"lightgreen"}},{"data":{"id":"105","token":521,"word":" ch","background":"lightgrey"}},{"data":{"id":"106","token":2707,"word":"uck","background":"lightgrey"}},{"data":{"id":"107","token":29892,"word":",","background":"lightgrey"}},{"data":{"id":"108","token":8112,"word":" wood","background":"lightgrey"}},{"data":{"id":"109","token":29899,"word":"-","background":"lightgrey"}},{"data":{"id":"110","token":845,"word":"sh","background":"lightgrey"}},{"data":{"id":"111","token":1698,"word":"ock","background":"lightgrey"}},{"data":{"id":"112","token":29892,"word":",","background":"lightgrey"}},{"data":{"id":"113","token":5962,"word":" ground","background":"lightgrey"}},{"data":{"id":"114","token":29886,"word":"p","background":"lightgrey"}},{"data":{"id":"115","token":335,"word":"ig","background":"lightgrey"}},{"data":{"id":"116","token":29892,"word":",","background":"lightgrey"}},{"data":{"id":"117","token":377,"word":" wh","background":"lightgrey"}},{"data":{"id":"118","token":391,"word":"ist","background":"lightgrey"}},{"data":{"id":"119","token":280,"word":"le","background":"lightgrey"}},{"data":{"id":"120","token":29886,"word":"p","background":"lightgrey"}},{"data":{"id":"121","token":335,"word":"ig","background":"lightgrey"}},{"data":{"id":"122","token":29892,"word":",","background":"lightgrey"}},{"data":{"id":"123","token":377,"word":" wh","background":"lightgrey"}},{"data":{"id":"124","token":391,"word":"ist","background":"lightgrey"}},{"data":{"id":"125","token":1358,"word":"ler","background":"lightgrey"}},{"data":{"id":"126","token":29892,"word":",","background":"lightgrey"}},{"data":{"id":"127","token":12003,"word":" thick","background":"lightgrey"}},{"data":{"id":"128","token":6115,"word":"wood","background":"lightgrey"}},{"data":{"id":"129","token":4319,"word":" bad","background":"lightgrey"}},{"data":{"id":"130","token":914,"word":"ger","background":"lightgrey"}},{"data":{"id":"131","token":29892,"word":",","background":"lightgrey"}},{"data":{"id":"132","token":7400,"word":" Canada","background":"lightgrey"}},{"data":{"id":"133","token":1766,"word":" mar","background":"lightgrey"}},{"data":{"id":"134","token":14817,"word":"mot","background":"lightgrey"}},{"data":{"id":"135","token":29892,"word":",","background":"lightgrey"}},{"data":{"id":"136","token":1601,"word":" mon","background":"lightgrey"}},{"data":{"id":"137","token":1165,"word":"ax","background":"lightgrey"}},{"data":{"id":"138","token":29892,"word":",","background":"lightgrey"}},{"data":{"id":"139","token":18786,"word":" moon","background":"lightgrey"}},{"data":{"id":"140","token":547,"word":"ack","background":"lightgrey"}},{"data":{"id":"141","token":29892,"word":",","background":"lightgrey"}},{"data":{"id":"142","token":591,"word":" we","background":"lightgrey"}},{"data":{"id":"143","token":264,"word":"en","background":"lightgrey"}},{"data":{"id":"144","token":17400,"word":"usk","background":"lightgrey"}},{"data":{"id":"145","token":29892,"word":",","background":"lightgrey"}},{"data":{"id":"146","token":2654,"word":" red","background":"lightgrey"}},{"data":{"id":"147","token":1601,"word":" mon","background":"lightgrey"}},{"data":{"id":"148","token":29895,"word":"k","background":"lightgrey"}},{"data":{"id":"149","token":29892,"word":",","background":"lightgrey"}},{"data":{"id":"150","token":2982,"word":" land","background":"lightgrey"}},{"data":{"id":"151","token":367,"word":" be","background":"lightgrey"}},{"data":{"id":"152","token":12483,"word":"aver","background":"lightgrey"}},{"data":{"id":"153","token":29892,"word":",","background":"lightgrey"}},{"data":{"id":"154","token":322,"word":" and","background":"lightgrey"}},{"data":{"id":"155","token":29892,"word":",","background":"lightgrey"}},{"data":{"id":"156","token":4249,"word":" among","background":"lightgrey"}},{"data":{"id":"157","token":5176,"word":" French","background":"lightgrey"}},{"data":{"id":"158","token":9145,"word":" Canad","background":"lightgrey"}},{"data":{"id":"159","token":5834,"word":"ians","background":"lightgrey"}},{"data":{"id":"160","token":297,"word":" in","background":"lightgrey"}},{"data":{"id":"161","token":18632,"word":" eastern","background":"lightgrey"}},{"data":{"id":"162","token":7400,"word":" Canada","background":"lightgrey"}},{"data":{"id":"163","token":29892,"word":",","background":"lightgrey"}},{"data":{"id":"164","token":269,"word":" s","background":"lightgrey"}},{"data":{"id":"165","token":2593,"word":"iff","background":"lightgrey"}},{"data":{"id":"166","token":280,"word":"le","background":"lightgrey"}},{"data":{"id":"167","token":1314,"word":"ux","background":"lightgrey"}},{"data":{"id":"168","token":29889,"word":".","background":"lightgrey"}},{"data":{"id":"169","token":450,"word":" The","background":"lightgrey"}},{"data":{"id":"170","token":1024,"word":" name","background":"lightgrey"}},{"data":{"id":"171","token":376,"word":" \"","background":"lightgrey"}},{"data":{"id":"172","token":27996,"word":"thick","background":"lightgrey"}},{"data":{"id":"173","token":6115,"word":"wood","background":"lightgrey"}},{"data":{"id":"174","token":4319,"word":" bad","background":"lightgrey"}},{"data":{"id":"175","token":914,"word":"ger","background":"lightgrey"}},{"data":{"id":"176","token":29908,"word":"\"","background":"lightgrey"}},{"data":{"id":"177","token":471,"word":" was","background":"lightgrey"}},{"data":{"id":"178","token":2183,"word":" given","background":"lightgrey"}},{"data":{"id":"179","token":297,"word":" in","background":"lightgrey"}},{"data":{"id":"180","token":278,"word":" the","background":"lightgrey"}},{"data":{"id":"181","token":4644,"word":" North","background":"lightgrey"}},{"data":{"id":"182","token":5933,"word":"west","background":"lightgrey"}},{"data":{"id":"183","token":304,"word":" to","background":"lightgrey"}},{"data":{"id":"184","token":20820,"word":" distinguish","background":"lightgrey"}},{"data":{"id":"185","token":278,"word":" the","background":"lightgrey"}},{"data":{"id":"186","token":13019,"word":" animal","background":"lightgrey"}},{"data":{"id":"187","token":515,"word":" from","background":"lightgrey"}},{"data":{"id":"188","token":278,"word":" the","background":"lightgrey"}},{"data":{"id":"189","token":7213,"word":" pra","background":"lightgrey"}},{"data":{"id":"190","token":24135,"word":"irie","background":"lightgrey"}},{"data":{"id":"191","token":4319,"word":" bad","background":"lightgrey"}},{"data":{"id":"192","token":914,"word":"ger","background":"lightgrey"}},{"data":{"id":"193","token":29889,"word":".","background":"lightgrey"}},{"data":{"id":"194","token":2598,"word":" Mon","background":"lightgrey"}},{"data":{"id":"195","token":1165,"word":"ax","background":"lightgrey"}},{"data":{"id":"196","token":313,"word":" (","background":"lightgrey"}},{"data":{"id":"197","token":29924,"word":"M","background":"lightgrey"}},{"data":{"id":"198","token":29980,"word":"\u00f3","background":"lightgrey"}},{"data":{"id":"199","token":265,"word":"on","background":"lightgrey"}},{"data":{"id":"200","token":547,"word":"ack","background":"lightgrey"}},{"data":{"id":"201","token":29897,"word":")","background":"lightgrey"}},{"data":{"id":"202","token":338,"word":" is","background":"lightgreen"}},{"data":{"id":"203","token":385,"word":" an","background":"lightgreen"}},{"data":{"id":"204","token":11545,"word":" Alg","background":"lightgreen"}},{"data":{"id":"205","token":265,"word":"on","background":"lightgreen"}},{"data":{"id":"206","token":339,"word":"qu","background":"lightgreen"}},{"data":{"id":"207","token":713,"word":"ian","background":"lightgreen"}},{"data":{"id":"208","token":1024,"word":" name","background":"lightgreen"}},{"data":{"id":"209","token":310,"word":" of","background":"lightgreen"}},{"data":{"id":"210","token":278,"word":" the","background":"lightgreen"}},{"data":{"id":"211","token":8112,"word":" wood","background":"lightgreen"}},{"data":{"id":"212","token":305,"word":"ch","background":"lightgreen"}},{"data":{"id":"213","token":2707,"word":"uck","background":"lightgreen"}},{"data":{"id":"214","token":29892,"word":",","background":"lightgreen"}},{"data":{"id":"215","token":607,"word":" which","background":"lightgreen"}},{"data":{"id":"216","token":2794,"word":" means","background":"lightgreen"}},{"data":{"id":"217","token":376,"word":" \"","background":"lightgreen"}},{"data":{"id":"218","token":29881,"word":"d","background":"lightgreen"}},{"data":{"id":"219","token":3567,"word":"igger","background":"lightgreen"}},{"data":{"id":"220","token":29908,"word":"\"","background":"lightgreen"}},{"data":{"id":"221","token":313,"word":" (","background":"lightgreen"}},{"data":{"id":"222","token":6854,"word":"cf","background":"lightgreen"}},{"data":{"id":"223","token":29889,"word":".","background":"lightgreen"}},{"data":{"id":"224","token":365,"word":" L","background":"lightgreen"}},{"data":{"id":"225","token":2386,"word":"ena","background":"lightgreen"}},{"data":{"id":"226","token":412,"word":"pe","background":"lightgreen"}},{"data":{"id":"227","token":1601,"word":" mon","background":"lightgreen"}},{"data":{"id":"228","token":496,"word":"ach","background":"lightgreen"}},{"data":{"id":"229","token":479,"word":"ge","background":"lightgreen"}},{"data":{"id":"230","token":29884,"word":"u","background":"lightgreen"}},{"data":{"id":"231","token":467,"word":").","background":"lightgreen"}},{"data":{"id":"232","token":10443,"word":" Young","background":"lightgreen"}},{"data":{"id":"233","token":5962,"word":" ground","background":"lightgreen"}},{"data":{"id":"234","token":29882,"word":"h","background":"lightgreen"}},{"data":{"id":"235","token":12099,"word":"ogs","background":"lightgreen"}},{"data":{"id":"236","token":1122,"word":" may","background":"lightgreen"}},{"data":{"id":"237","token":367,"word":" be","background":"lightgreen"}},{"data":{"id":"238","token":2000,"word":" called","background":"lightgreen"}},{"data":{"id":"239","token":521,"word":" ch","background":"lightgreen"}},{"data":{"id":"240","token":2707,"word":"uck","background":"lightgreen"}},{"data":{"id":"241","token":18964,"word":"lings","background":"lightgreen"}},{"data":{"id":"242","token":29889,"word":".","background":"lightgreen"}},{"data":{"id":"243","token":30118,"word":"\u200a","background":"lightgreen"}},{"data":{"id":"244","token":29889,"word":".","background":"lightgreen"}},{"data":{"id":"245","token":2180,"word":" At","background":"lightgreen"}},{"data":{"id":"246","token":3203,"word":" least","background":"lightgreen"}},{"data":{"id":"247","token":393,"word":" that","background":"lightgreen"}},{"data":{"id":"248","token":338,"word":" is","background":"lightgreen"}},{"data":{"id":"249","token":920,"word":" how","background":"lightgreen"}},{"data":{"id":"250","token":896,"word":" they","background":"lightgreen"}},{"data":{"id":"251","token":1246,"word":" call","background":"lightgreen"}},{"data":{"id":"252","token":902,"word":" her","background":"lightgreen"}},{"data":{"id":"253","token":297,"word":" in","background":"lightgreen"}},{"data":{"id":"254","token":1749,"word":" our","background":"lightgreen"}},{"data":{"id":"255","token":29643,"word":" neighbourhood","background":"lightgreen"}},{"data":{"id":"256","token":29889,"word":".","background":"lightgreen"}},{"data":{"id":"257","token":6493,"word":" visit","background":"lightgreen"}},{"data":{"id":"258","token":592,"word":" me","background":"lightgreen"}},{"data":{"id":"259","token":22600,"word":" yesterday","background":"lightgreen"}},{"data":{"id":"260","token":29889,"word":".","background":"lightgreen"}}],"edges":[{"data":{"id":"0-1","source":"0","target":"1"}},{"data":{"id":"1-2","source":"1","target":"2"}},{"data":{"id":"2-3","source":"2","target":"3"}},{"data":{"id":"3-4","source":"3","target":"4"}},{"data":{"id":"4-5","source":"4","target":"5"}},{"data":{"id":"4-6","source":"4","target":"6"}},{"data":{"id":"4-7","source":"4","target":"7"}},{"data":{"id":"5-8","source":"5","target":"8"}},{"data":{"id":"8-9","source":"8","target":"9"}},{"data":{"id":"9-10","source":"9","target":"10"}},{"data":{"id":"10-11","source":"10","target":"11"}},{"data":{"id":"11-12","source":"11","target":"12"}},{"data":{"id":"12-13","source":"12","target":"13"}},{"data":{"id":"13-14","source":"13","target":"14"}},{"data":{"id":"14-15","source":"14","target":"15"}},{"data":{"id":"15-16","source":"15","target":"16"}},{"data":{"id":"16-17","source":"16","target":"17"}},{"data":{"id":"17-18","source":"17","target":"18"}},{"data":{"id":"18-19","source":"18","target":"19"}},{"data":{"id":"19-20","source":"19","target":"20"}},{"data":{"id":"20-21","source":"20","target":"21"}},{"data":{"id":"21-22","source":"21","target":"22"}},{"data":{"id":"22-23","source":"22","target":"23"}},{"data":{"id":"23-24","source":"23","target":"24"}},{"data":{"id":"24-25","source":"24","target":"25"}},{"data":{"id":"25-26","source":"25","target":"26"}},{"data":{"id":"26-27","source":"26","target":"27"}},{"data":{"id":"27-28","source":"27","target":"28"}},{"data":{"id":"28-29","source":"28","target":"29"}},{"data":{"id":"29-30","source":"29","target":"30"}},{"data":{"id":"30-31","source":"30","target":"31"}},{"data":{"id":"31-32","source":"31","target":"32"}},{"data":{"id":"32-33","source":"32","target":"33"}},{"data":{"id":"33-34","source":"33","target":"34"}},{"data":{"id":"34-35","source":"34","target":"35"}},{"data":{"id":"35-36","source":"35","target":"36"}},{"data":{"id":"36-37","source":"36","target":"37"}},{"data":{"id":"37-38","source":"37","target":"38"}},{"data":{"id":"38-39","source":"38","target":"39"}},{"data":{"id":"39-40","source":"39","target":"40"}},{"data":{"id":"40-41","source":"40","target":"41"}},{"data":{"id":"41-42","source":"41","target":"42"}},{"data":{"id":"42-43","source":"42","target":"43"}},{"data":{"id":"43-44","source":"43","target":"44"}},{"data":{"id":"44-45","source":"44","target":"45"}},{"data":{"id":"45-46","source":"45","target":"46"}},{"data":{"id":"46-47","source":"46","target":"47"}},{"data":{"id":"47-48","source":"47","target":"48"}},{"data":{"id":"48-49","source":"48","target":"49"}},{"data":{"id":"49-50","source":"49","target":"50"}},{"data":{"id":"50-51","source":"50","target":"51"}},{"data":{"id":"51-52","source":"51","target":"52"}},{"data":{"id":"52-53","source":"52","target":"53"}},{"data":{"id":"53-54","source":"53","target":"54"}},{"data":{"id":"54-55","source":"54","target":"55"}},{"data":{"id":"55-56","source":"55","target":"56"}},{"data":{"id":"56-57","source":"56","target":"57"}},{"data":{"id":"57-58","source":"57","target":"58"}},{"data":{"id":"58-59","source":"58","target":"59"}},{"data":{"id":"59-60","source":"59","target":"60"}},{"data":{"id":"60-61","source":"60","target":"61"}},{"data":{"id":"61-62","source":"61","target":"62"}},{"data":{"id":"62-63","source":"62","target":"63"}},{"data":{"id":"63-64","source":"63","target":"64"}},{"data":{"id":"64-65","source":"64","target":"65"}},{"data":{"id":"65-66","source":"65","target":"66"}},{"data":{"id":"66-67","source":"66","target":"67"}},{"data":{"id":"67-68","source":"67","target":"68"}},{"data":{"id":"68-69","source":"68","target":"69"}},{"data":{"id":"69-70","source":"69","target":"70"}},{"data":{"id":"70-71","source":"70","target":"71"}},{"data":{"id":"71-72","source":"71","target":"72"}},{"data":{"id":"72-73","source":"72","target":"73"}},{"data":{"id":"73-74","source":"73","target":"74"}},{"data":{"id":"74-75","source":"74","target":"75"}},{"data":{"id":"75-76","source":"75","target":"76"}},{"data":{"id":"76-77","source":"76","target":"77"}},{"data":{"id":"77-78","source":"77","target":"78"}},{"data":{"id":"78-79","source":"78","target":"79"}},{"data":{"id":"79-80","source":"79","target":"80"}},{"data":{"id":"80-81","source":"80","target":"81"}},{"data":{"id":"81-82","source":"81","target":"82"}},{"data":{"id":"82-83","source":"82","target":"83"}},{"data":{"id":"83-84","source":"83","target":"84"}},{"data":{"id":"84-85","source":"84","target":"85"}},{"data":{"id":"85-86","source":"85","target":"86"}},{"data":{"id":"86-87","source":"86","target":"87"}},{"data":{"id":"87-88","source":"87","target":"88"}},{"data":{"id":"88-89","source":"88","target":"89"}},{"data":{"id":"89-90","source":"89","target":"90"}},{"data":{"id":"90-91","source":"90","target":"91"}},{"data":{"id":"91-92","source":"91","target":"92"}},{"data":{"id":"92-93","source":"92","target":"93"}},{"data":{"id":"93-94","source":"93","target":"94"}},{"data":{"id":"94-95","source":"94","target":"95"}},{"data":{"id":"95-96","source":"95","target":"96"}},{"data":{"id":"96-97","source":"96","target":"97"}},{"data":{"id":"97-98","source":"97","target":"98"}},{"data":{"id":"6-99","source":"6","target":"99"}},{"data":{"id":"99-100","source":"99","target":"100"}},{"data":{"id":"100-101","source":"100","target":"101"}},{"data":{"id":"101-102","source":"101","target":"102"}},{"data":{"id":"102-103","source":"102","target":"103"}},{"data":{"id":"102-104","source":"102","target":"104"}},{"data":{"id":"103-105","source":"103","target":"105"}},{"data":{"id":"105-106","source":"105","target":"106"}},{"data":{"id":"106-107","source":"106","target":"107"}},{"data":{"id":"107-108","source":"107","target":"108"}},{"data":{"id":"108-109","source":"108","target":"109"}},{"data":{"id":"109-110","source":"109","target":"110"}},{"data":{"id":"110-111","source":"110","target":"111"}},{"data":{"id":"111-112","source":"111","target":"112"}},{"data":{"id":"112-113","source":"112","target":"113"}},{"data":{"id":"113-114","source":"113","target":"114"}},{"data":{"id":"114-115","source":"114","target":"115"}},{"data":{"id":"115-116","source":"115","target":"116"}},{"data":{"id":"116-117","source":"116","target":"117"}},{"data":{"id":"117-118","source":"117","target":"118"}},{"data":{"id":"118-119","source":"118","target":"119"}},{"data":{"id":"119-120","source":"119","target":"120"}},{"data":{"id":"120-121","source":"120","target":"121"}},{"data":{"id":"121-122","source":"121","target":"122"}},{"data":{"id":"122-123","source":"122","target":"123"}},{"data":{"id":"123-124","source":"123","target":"124"}},{"data":{"id":"124-125","source":"124","target":"125"}},{"data":{"id":"125-126","source":"125","target":"126"}},{"data":{"id":"126-127","source":"126","target":"127"}},{"data":{"id":"127-128","source":"127","target":"128"}},{"data":{"id":"128-129","source":"128","target":"129"}},{"data":{"id":"129-130","source":"129","target":"130"}},{"data":{"id":"130-131","source":"130","target":"131"}},{"data":{"id":"131-132","source":"131","target":"132"}},{"data":{"id":"132-133","source":"132","target":"133"}},{"data":{"id":"133-134","source":"133","target":"134"}},{"data":{"id":"134-135","source":"134","target":"135"}},{"data":{"id":"135-136","source":"135","target":"136"}},{"data":{"id":"136-137","source":"136","target":"137"}},{"data":{"id":"137-138","source":"137","target":"138"}},{"data":{"id":"138-139","source":"138","target":"139"}},{"data":{"id":"139-140","source":"139","target":"140"}},{"data":{"id":"140-141","source":"140","target":"141"}},{"data":{"id":"141-142","source":"141","target":"142"}},{"data":{"id":"142-143","source":"142","target":"143"}},{"data":{"id":"143-144","source":"143","target":"144"}},{"data":{"id":"144-145","source":"144","target":"145"}},{"data":{"id":"145-146","source":"145","target":"146"}},{"data":{"id":"146-147","source":"146","target":"147"}},{"data":{"id":"147-148","source":"147","target":"148"}},{"data":{"id":"148-149","source":"148","target":"149"}},{"data":{"id":"149-150","source":"149","target":"150"}},{"data":{"id":"150-151","source":"150","target":"151"}},{"data":{"id":"151-152","source":"151","target":"152"}},{"data":{"id":"152-153","source":"152","target":"153"}},{"data":{"id":"153-154","source":"153","target":"154"}},{"data":{"id":"154-155","source":"154","target":"155"}},{"data":{"id":"155-156","source":"155","target":"156"}},{"data":{"id":"156-157","source":"156","target":"157"}},{"data":{"id":"157-158","source":"157","target":"158"}},{"data":{"id":"158-159","source":"158","target":"159"}},{"data":{"id":"159-160","source":"159","target":"160"}},{"data":{"id":"160-161","source":"160","target":"161"}},{"data":{"id":"161-162","source":"161","target":"162"}},{"data":{"id":"162-163","source":"162","target":"163"}},{"data":{"id":"163-164","source":"163","target":"164"}},{"data":{"id":"164-165","source":"164","target":"165"}},{"data":{"id":"165-166","source":"165","target":"166"}},{"data":{"id":"166-167","source":"166","target":"167"}},{"data":{"id":"167-168","source":"167","target":"168"}},{"data":{"id":"168-169","source":"168","target":"169"}},{"data":{"id":"169-170","source":"169","target":"170"}},{"data":{"id":"170-171","source":"170","target":"171"}},{"data":{"id":"171-172","source":"171","target":"172"}},{"data":{"id":"172-173","source":"172","target":"173"}},{"data":{"id":"173-174","source":"173","target":"174"}},{"data":{"id":"174-175","source":"174","target":"175"}},{"data":{"id":"175-176","source":"175","target":"176"}},{"data":{"id":"176-177","source":"176","target":"177"}},{"data":{"id":"177-178","source":"177","target":"178"}},{"data":{"id":"178-179","source":"178","target":"179"}},{"data":{"id":"179-180","source":"179","target":"180"}},{"data":{"id":"180-181","source":"180","target":"181"}},{"data":{"id":"181-182","source":"181","target":"182"}},{"data":{"id":"182-183","source":"182","target":"183"}},{"data":{"id":"183-184","source":"183","target":"184"}},{"data":{"id":"184-185","source":"184","target":"185"}},{"data":{"id":"185-186","source":"185","target":"186"}},{"data":{"id":"186-187","source":"186","target":"187"}},{"data":{"id":"187-188","source":"187","target":"188"}},{"data":{"id":"188-189","source":"188","target":"189"}},{"data":{"id":"189-190","source":"189","target":"190"}},{"data":{"id":"190-191","source":"190","target":"191"}},{"data":{"id":"191-192","source":"191","target":"192"}},{"data":{"id":"192-193","source":"192","target":"193"}},{"data":{"id":"193-194","source":"193","target":"194"}},{"data":{"id":"194-195","source":"194","target":"195"}},{"data":{"id":"195-196","source":"195","target":"196"}},{"data":{"id":"196-197","source":"196","target":"197"}},{"data":{"id":"197-198","source":"197","target":"198"}},{"data":{"id":"198-199","source":"198","target":"199"}},{"data":{"id":"199-200","source":"199","target":"200"}},{"data":{"id":"200-201","source":"200","target":"201"}},{"data":{"id":"201-202","source":"201","target":"202"}},{"data":{"id":"202-203","source":"202","target":"203"}},{"data":{"id":"203-204","source":"203","target":"204"}},{"data":{"id":"204-205","source":"204","target":"205"}},{"data":{"id":"205-206","source":"205","target":"206"}},{"data":{"id":"206-207","source":"206","target":"207"}},{"data":{"id":"207-208","source":"207","target":"208"}},{"data":{"id":"208-209","source":"208","target":"209"}},{"data":{"id":"209-210","source":"209","target":"210"}},{"data":{"id":"210-211","source":"210","target":"211"}},{"data":{"id":"211-212","source":"211","target":"212"}},{"data":{"id":"212-213","source":"212","target":"213"}},{"data":{"id":"213-214","source":"213","target":"214"}},{"data":{"id":"214-215","source":"214","target":"215"}},{"data":{"id":"215-216","source":"215","target":"216"}},{"data":{"id":"216-217","source":"216","target":"217"}},{"data":{"id":"217-218","source":"217","target":"218"}},{"data":{"id":"218-219","source":"218","target":"219"}},{"data":{"id":"219-220","source":"219","target":"220"}},{"data":{"id":"220-221","source":"220","target":"221"}},{"data":{"id":"221-222","source":"221","target":"222"}},{"data":{"id":"222-223","source":"222","target":"223"}},{"data":{"id":"223-224","source":"223","target":"224"}},{"data":{"id":"224-225","source":"224","target":"225"}},{"data":{"id":"225-226","source":"225","target":"226"}},{"data":{"id":"226-227","source":"226","target":"227"}},{"data":{"id":"227-228","source":"227","target":"228"}},{"data":{"id":"228-229","source":"228","target":"229"}},{"data":{"id":"229-230","source":"229","target":"230"}},{"data":{"id":"230-231","source":"230","target":"231"}},{"data":{"id":"231-232","source":"231","target":"232"}},{"data":{"id":"232-233","source":"232","target":"233"}},{"data":{"id":"233-234","source":"233","target":"234"}},{"data":{"id":"234-235","source":"234","target":"235"}},{"data":{"id":"235-236","source":"235","target":"236"}},{"data":{"id":"236-237","source":"236","target":"237"}},{"data":{"id":"237-238","source":"237","target":"238"}},{"data":{"id":"238-239","source":"238","target":"239"}},{"data":{"id":"239-240","source":"239","target":"240"}},{"data":{"id":"240-241","source":"240","target":"241"}},{"data":{"id":"241-242","source":"241","target":"242"}},{"data":{"id":"242-243","source":"242","target":"243"}},{"data":{"id":"104-244","source":"104","target":"244"}},{"data":{"id":"244-245","source":"244","target":"245"}},{"data":{"id":"245-246","source":"245","target":"246"}},{"data":{"id":"246-247","source":"246","target":"247"}},{"data":{"id":"247-248","source":"247","target":"248"}},{"data":{"id":"248-249","source":"248","target":"249"}},{"data":{"id":"249-250","source":"249","target":"250"}},{"data":{"id":"250-251","source":"250","target":"251"}},{"data":{"id":"251-252","source":"251","target":"252"}},{"data":{"id":"252-253","source":"252","target":"253"}},{"data":{"id":"253-254","source":"253","target":"254"}},{"data":{"id":"254-255","source":"254","target":"255"}},{"data":{"id":"255-256","source":"255","target":"256"}},{"data":{"id":"7-257","source":"7","target":"257"}},{"data":{"id":"257-258","source":"257","target":"258"}},{"data":{"id":"258-259","source":"258","target":"259"}},{"data":{"id":"259-260","source":"259","target":"260"}}]},"style":[{"selector":"node","css":{"content":"data(word)","text-valign":"center","text-halign":"center","height":50,"width":50,"background-color":"data(background)"}},{"selector":"edge","css":{"curve-style":"bezier","target-arrow-shape":"triangle"}}],"layout":{"name":"cose"}};
+  value['container'] = document.currentScript.parentElement;
+  cytoscape(value);
+};</script></div>
+</section>
+<section id="sampling-random-tokens" class="level2" data-number="6.3">
+<h2 data-number="6.3" class="anchored" data-anchor-id="sampling-random-tokens"><span class="header-section-number">6.3</span> Sampling random tokens</h2>
+<p>Our context holds a sample function <code>samplef</code>, which allows us to sample tokens according to logits.</p>
+<p>For example:</p>
+<div class="sourceClojure">
+<div class="sourceCode" id="cb15"><pre class="sourceCode clojure code-with-copy"><code class="sourceCode clojure"><span id="cb15-1"><a href="#cb15-1" aria-hidden="true" tabindex="-1"></a>(<span class="kw">delay</span></span>
+<span id="cb15-2"><a href="#cb15-2" aria-hidden="true" tabindex="-1"></a>  (<span class="kw">let</span> [*context (<span class="kw">atom</span> (new-context {<span class="at">:seed</span> <span class="dv">1</span>}))</span>
+<span id="cb15-3"><a href="#cb15-3" aria-hidden="true" tabindex="-1"></a>        {<span class="at">:keys</span> [samplef]} <span class="at">@*context</span>]</span>
+<span id="cb15-4"><a href="#cb15-4" aria-hidden="true" tabindex="-1"></a>    (<span class="kw">-&gt;&gt;</span> [<span class="st">"How much wood would a"</span></span>
+<span id="cb15-5"><a href="#cb15-5" aria-hidden="true" tabindex="-1"></a>          <span class="st">"How much wood would a woodchuck"</span></span>
+<span id="cb15-6"><a href="#cb15-6" aria-hidden="true" tabindex="-1"></a>          <span class="st">"How much wood would a woodchuck chuck"</span>]</span>
+<span id="cb15-7"><a href="#cb15-7" aria-hidden="true" tabindex="-1"></a>         (<span class="kw">mapv</span></span>
+<span id="cb15-8"><a href="#cb15-8" aria-hidden="true" tabindex="-1"></a>          (<span class="kw">fn</span> [text]</span>
+<span id="cb15-9"><a href="#cb15-9" aria-hidden="true" tabindex="-1"></a>            (<span class="kw">let</span> [logits (<span class="kw">-&gt;&gt;</span> text</span>
+<span id="cb15-10"><a href="#cb15-10" aria-hidden="true" tabindex="-1"></a>                              llm/tokenize</span>
+<span id="cb15-11"><a href="#cb15-11" aria-hidden="true" tabindex="-1"></a>                              (logits! *context))]</span>
+<span id="cb15-12"><a href="#cb15-12" aria-hidden="true" tabindex="-1"></a>              [text</span>
+<span id="cb15-13"><a href="#cb15-13" aria-hidden="true" tabindex="-1"></a>               (<span class="kw">-&gt;&gt;</span> (<span class="kw">repeatedly</span></span>
+<span id="cb15-14"><a href="#cb15-14" aria-hidden="true" tabindex="-1"></a>                     <span class="dv">1000</span></span>
+<span id="cb15-15"><a href="#cb15-15" aria-hidden="true" tabindex="-1"></a>                     #(llm/token-&gt;str (samplef logits)))</span>
+<span id="cb15-16"><a href="#cb15-16" aria-hidden="true" tabindex="-1"></a>                    <span class="kw">frequencies</span>)]))))))</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+<div class="printedClojure">
+<div class="sourceCode" id="cb16"><pre class="sourceCode clojure code-with-copy"><code class="sourceCode clojure"><span id="cb16-1"><a href="#cb16-1" aria-hidden="true" tabindex="-1"></a>[[<span class="st">"How much wood would a"</span> {<span class="st">" wood"</span> <span class="dv">945</span>, <span class="st">" Wood"</span> <span class="dv">53</span>, <span class="st">" wooden"</span> <span class="dv">2</span>}]</span>
+<span id="cb16-2"><a href="#cb16-2" aria-hidden="true" tabindex="-1"></a> [<span class="st">"How much wood would a woodchuck"</span> {<span class="st">" ch"</span> <span class="dv">996</span>, <span class="st">"..."</span> <span class="dv">2</span>, <span class="st">" wood"</span> <span class="dv">2</span>}]</span>
+<span id="cb16-3"><a href="#cb16-3" aria-hidden="true" tabindex="-1"></a> [<span class="st">"How much wood would a woodchuck chuck"</span></span>
+<span id="cb16-4"><a href="#cb16-4" aria-hidden="true" tabindex="-1"></a>  {<span class="st">" if"</span> <span class="dv">929</span>, <span class="st">","</span> <span class="dv">67</span>, <span class="st">"</span><span class="sc">\n</span><span class="st">"</span> <span class="dv">2</span>, <span class="st">"..."</span> <span class="dv">2</span>}]]</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+<p>For convenience, let us use this function to sample one token. Note that we change the seed for diversity.</p>
+<p>TODO: Handle seeds more carefully for reproducibility..</p>
+<div class="sourceClojure">
+<div class="sourceCode" id="cb17"><pre class="sourceCode clojure code-with-copy"><code class="sourceCode clojure"><span id="cb17-1"><a href="#cb17-1" aria-hidden="true" tabindex="-1"></a>(<span class="bu">defn</span><span class="fu"> sample-once! </span>[*context logits]</span>
+<span id="cb17-2"><a href="#cb17-2" aria-hidden="true" tabindex="-1"></a>  (<span class="kw">-&gt;</span> <span class="at">@*context</span></span>
+<span id="cb17-3"><a href="#cb17-3" aria-hidden="true" tabindex="-1"></a>      <span class="at">:llama-ctx</span></span>
+<span id="cb17-4"><a href="#cb17-4" aria-hidden="true" tabindex="-1"></a>      (raw/llama_set_rng_seed (<span class="kw">rand-int</span> <span class="dv">9999</span>)))</span>
+<span id="cb17-5"><a href="#cb17-5" aria-hidden="true" tabindex="-1"></a>  ((<span class="at">:samplef</span> <span class="at">@*context</span>)</span>
+<span id="cb17-6"><a href="#cb17-6" aria-hidden="true" tabindex="-1"></a>   logits))</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+<p>For example:</p>
+<div class="sourceClojure">
+<div class="sourceCode" id="cb18"><pre class="sourceCode clojure code-with-copy"><code class="sourceCode clojure"><span id="cb18-1"><a href="#cb18-1" aria-hidden="true" tabindex="-1"></a>(<span class="kw">delay</span></span>
+<span id="cb18-2"><a href="#cb18-2" aria-hidden="true" tabindex="-1"></a>  (<span class="kw">let</span> [*context (<span class="kw">atom</span> (new-context))]</span>
+<span id="cb18-3"><a href="#cb18-3" aria-hidden="true" tabindex="-1"></a>    (<span class="kw">-&gt;&gt;</span> <span class="st">"How much wood would a"</span></span>
+<span id="cb18-4"><a href="#cb18-4" aria-hidden="true" tabindex="-1"></a>         llm/tokenize</span>
+<span id="cb18-5"><a href="#cb18-5" aria-hidden="true" tabindex="-1"></a>         (logits! *context)</span>
+<span id="cb18-6"><a href="#cb18-6" aria-hidden="true" tabindex="-1"></a>         (sample-once! *context)</span>
+<span id="cb18-7"><a href="#cb18-7" aria-hidden="true" tabindex="-1"></a>         llm/token-&gt;str)))</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+<div class="printedClojure">
+<div class="sourceCode" id="cb19"><pre class="sourceCode clojure code-with-copy"><code class="sourceCode clojure"><span id="cb19-1"><a href="#cb19-1" aria-hidden="true" tabindex="-1"></a><span class="st">" wood"</span></span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+<div style="background-color:grey;height:2px;width:100%;"></div>
+<div><pre><small><small>source: <a href="https://github.com/daslu/LLaMPPL.clj/blob/main/notebooks/llamppl/trie.clj">notebooks/llamppl/trie.clj</a></small></small></pre></div>
+
+
+</section>
+
+</main> <!-- /main -->
+<script id="quarto-html-after-body" type="application/javascript">
+window.document.addEventListener("DOMContentLoaded", function (event) {
+  const toggleBodyColorMode = (bsSheetEl) => {
+    const mode = bsSheetEl.getAttribute("data-mode");
+    const bodyEl = window.document.querySelector("body");
+    if (mode === "dark") {
+      bodyEl.classList.add("quarto-dark");
+      bodyEl.classList.remove("quarto-light");
+    } else {
+      bodyEl.classList.add("quarto-light");
+      bodyEl.classList.remove("quarto-dark");
+    }
+  }
+  const toggleBodyColorPrimary = () => {
+    const bsSheetEl = window.document.querySelector("link#quarto-bootstrap");
+    if (bsSheetEl) {
+      toggleBodyColorMode(bsSheetEl);
+    }
+  }
+  toggleBodyColorPrimary();  
+  const icon = "";
+  const anchorJS = new window.AnchorJS();
+  anchorJS.options = {
+    placement: 'right',
+    icon: icon
+  };
+  anchorJS.add('.anchored');
+  const isCodeAnnotation = (el) => {
+    for (const clz of el.classList) {
+      if (clz.startsWith('code-annotation-')) {                     
+        return true;
+      }
+    }
+    return false;
+  }
+  const clipboard = new window.ClipboardJS('.code-copy-button', {
+    text: function(trigger) {
+      const codeEl = trigger.previousElementSibling.cloneNode(true);
+      for (const childEl of codeEl.children) {
+        if (isCodeAnnotation(childEl)) {
+          childEl.remove();
+        }
+      }
+      return codeEl.innerText;
+    }
+  });
+  clipboard.on('success', function(e) {
+    // button target
+    const button = e.trigger;
+    // don't keep focus
+    button.blur();
+    // flash "checked"
+    button.classList.add('code-copy-button-checked');
+    var currentTitle = button.getAttribute("title");
+    button.setAttribute("title", "Copied!");
+    let tooltip;
+    if (window.bootstrap) {
+      button.setAttribute("data-bs-toggle", "tooltip");
+      button.setAttribute("data-bs-placement", "left");
+      button.setAttribute("data-bs-title", "Copied!");
+      tooltip = new bootstrap.Tooltip(button, 
+        { trigger: "manual", 
+          customClass: "code-copy-button-tooltip",
+          offset: [0, -8]});
+      tooltip.show();    
+    }
+    setTimeout(function() {
+      if (tooltip) {
+        tooltip.hide();
+        button.removeAttribute("data-bs-title");
+        button.removeAttribute("data-bs-toggle");
+        button.removeAttribute("data-bs-placement");
+      }
+      button.setAttribute("title", currentTitle);
+      button.classList.remove('code-copy-button-checked');
+    }, 1000);
+    // clear code selection
+    e.clearSelection();
+  });
+  function tippyHover(el, contentFn, onTriggerFn, onUntriggerFn) {
+    const config = {
+      allowHTML: true,
+      maxWidth: 500,
+      delay: 100,
+      arrow: false,
+      appendTo: function(el) {
+          return el.parentElement;
+      },
+      interactive: true,
+      interactiveBorder: 10,
+      theme: 'quarto',
+      placement: 'bottom-start',
+    };
+    if (contentFn) {
+      config.content = contentFn;
+    }
+    if (onTriggerFn) {
+      config.onTrigger = onTriggerFn;
+    }
+    if (onUntriggerFn) {
+      config.onUntrigger = onUntriggerFn;
+    }
+    window.tippy(el, config); 
+  }
+  const noterefs = window.document.querySelectorAll('a[role="doc-noteref"]');
+  for (var i=0; i<noterefs.length; i++) {
+    const ref = noterefs[i];
+    tippyHover(ref, function() {
+      // use id or data attribute instead here
+      let href = ref.getAttribute('data-footnote-href') || ref.getAttribute('href');
+      try { href = new URL(href).hash; } catch {}
+      const id = href.replace(/^#\/?/, "");
+      const note = window.document.getElementById(id);
+      return note.innerHTML;
+    });
+  }
+  const xrefs = window.document.querySelectorAll('a.quarto-xref');
+  const processXRef = (id, note) => {
+    // Strip column container classes
+    const stripColumnClz = (el) => {
+      el.classList.remove("page-full", "page-columns");
+      if (el.children) {
+        for (const child of el.children) {
+          stripColumnClz(child);
+        }
+      }
+    }
+    stripColumnClz(note)
+    if (id === null || id.startsWith('sec-')) {
+      // Special case sections, only their first couple elements
+      const container = document.createElement("div");
+      if (note.children && note.children.length > 2) {
+        container.appendChild(note.children[0].cloneNode(true));
+        for (let i = 1; i < note.children.length; i++) {
+          const child = note.children[i];
+          if (child.tagName === "P" && child.innerText === "") {
+            continue;
+          } else {
+            container.appendChild(child.cloneNode(true));
+            break;
+          }
+        }
+        if (window.Quarto?.typesetMath) {
+          window.Quarto.typesetMath(container);
+        }
+        return container.innerHTML
+      } else {
+        if (window.Quarto?.typesetMath) {
+          window.Quarto.typesetMath(note);
+        }
+        return note.innerHTML;
+      }
+    } else {
+      // Remove any anchor links if they are present
+      const anchorLink = note.querySelector('a.anchorjs-link');
+      if (anchorLink) {
+        anchorLink.remove();
+      }
+      if (window.Quarto?.typesetMath) {
+        window.Quarto.typesetMath(note);
+      }
+      // TODO in 1.5, we should make sure this works without a callout special case
+      if (note.classList.contains("callout")) {
+        return note.outerHTML;
+      } else {
+        return note.innerHTML;
+      }
+    }
+  }
+  for (var i=0; i<xrefs.length; i++) {
+    const xref = xrefs[i];
+    tippyHover(xref, undefined, function(instance) {
+      instance.disable();
+      let url = xref.getAttribute('href');
+      let hash = undefined; 
+      if (url.startsWith('#')) {
+        hash = url;
+      } else {
+        try { hash = new URL(url).hash; } catch {}
+      }
+      if (hash) {
+        const id = hash.replace(/^#\/?/, "");
+        const note = window.document.getElementById(id);
+        if (note !== null) {
+          try {
+            const html = processXRef(id, note.cloneNode(true));
+            instance.setContent(html);
+          } finally {
+            instance.enable();
+            instance.show();
+          }
+        } else {
+          // See if we can fetch this
+          fetch(url.split('#')[0])
+          .then(res => res.text())
+          .then(html => {
+            const parser = new DOMParser();
+            const htmlDoc = parser.parseFromString(html, "text/html");
+            const note = htmlDoc.getElementById(id);
+            if (note !== null) {
+              const html = processXRef(id, note);
+              instance.setContent(html);
+            } 
+          }).finally(() => {
+            instance.enable();
+            instance.show();
+          });
+        }
+      } else {
+        // See if we can fetch a full url (with no hash to target)
+        // This is a special case and we should probably do some content thinning / targeting
+        fetch(url)
+        .then(res => res.text())
+        .then(html => {
+          const parser = new DOMParser();
+          const htmlDoc = parser.parseFromString(html, "text/html");
+          const note = htmlDoc.querySelector('main.content');
+          if (note !== null) {
+            // This should only happen for chapter cross references
+            // (since there is no id in the URL)
+            // remove the first header
+            if (note.children.length > 0 && note.children[0].tagName === "HEADER") {
+              note.children[0].remove();
+            }
+            const html = processXRef(null, note);
+            instance.setContent(html);
+          } 
+        }).finally(() => {
+          instance.enable();
+          instance.show();
+        });
+      }
+    }, function(instance) {
+    });
+  }
+      let selectedAnnoteEl;
+      const selectorForAnnotation = ( cell, annotation) => {
+        let cellAttr = 'data-code-cell="' + cell + '"';
+        let lineAttr = 'data-code-annotation="' +  annotation + '"';
+        const selector = 'span[' + cellAttr + '][' + lineAttr + ']';
+        return selector;
+      }
+      const selectCodeLines = (annoteEl) => {
+        const doc = window.document;
+        const targetCell = annoteEl.getAttribute("data-target-cell");
+        const targetAnnotation = annoteEl.getAttribute("data-target-annotation");
+        const annoteSpan = window.document.querySelector(selectorForAnnotation(targetCell, targetAnnotation));
+        const lines = annoteSpan.getAttribute("data-code-lines").split(",");
+        const lineIds = lines.map((line) => {
+          return targetCell + "-" + line;
+        })
+        let top = null;
+        let height = null;
+        let parent = null;
+        if (lineIds.length > 0) {
+            //compute the position of the single el (top and bottom and make a div)
+            const el = window.document.getElementById(lineIds[0]);
+            top = el.offsetTop;
+            height = el.offsetHeight;
+            parent = el.parentElement.parentElement;
+          if (lineIds.length > 1) {
+            const lastEl = window.document.getElementById(lineIds[lineIds.length - 1]);
+            const bottom = lastEl.offsetTop + lastEl.offsetHeight;
+            height = bottom - top;
+          }
+          if (top !== null && height !== null && parent !== null) {
+            // cook up a div (if necessary) and position it 
+            let div = window.document.getElementById("code-annotation-line-highlight");
+            if (div === null) {
+              div = window.document.createElement("div");
+              div.setAttribute("id", "code-annotation-line-highlight");
+              div.style.position = 'absolute';
+              parent.appendChild(div);
+            }
+            div.style.top = top - 2 + "px";
+            div.style.height = height + 4 + "px";
+            div.style.left = 0;
+            let gutterDiv = window.document.getElementById("code-annotation-line-highlight-gutter");
+            if (gutterDiv === null) {
+              gutterDiv = window.document.createElement("div");
+              gutterDiv.setAttribute("id", "code-annotation-line-highlight-gutter");
+              gutterDiv.style.position = 'absolute';
+              const codeCell = window.document.getElementById(targetCell);
+              const gutter = codeCell.querySelector('.code-annotation-gutter');
+              gutter.appendChild(gutterDiv);
+            }
+            gutterDiv.style.top = top - 2 + "px";
+            gutterDiv.style.height = height + 4 + "px";
+          }
+          selectedAnnoteEl = annoteEl;
+        }
+      };
+      const unselectCodeLines = () => {
+        const elementsIds = ["code-annotation-line-highlight", "code-annotation-line-highlight-gutter"];
+        elementsIds.forEach((elId) => {
+          const div = window.document.getElementById(elId);
+          if (div) {
+            div.remove();
+          }
+        });
+        selectedAnnoteEl = undefined;
+      };
+        // Handle positioning of the toggle
+    window.addEventListener(
+      "resize",
+      throttle(() => {
+        elRect = undefined;
+        if (selectedAnnoteEl) {
+          selectCodeLines(selectedAnnoteEl);
+        }
+      }, 10)
+    );
+    function throttle(fn, ms) {
+    let throttle = false;
+    let timer;
+      return (...args) => {
+        if(!throttle) { // first call gets through
+            fn.apply(this, args);
+            throttle = true;
+        } else { // all the others get throttled
+            if(timer) clearTimeout(timer); // cancel #2
+            timer = setTimeout(() => {
+              fn.apply(this, args);
+              timer = throttle = false;
+            }, ms);
+        }
+      };
+    }
+      // Attach click handler to the DT
+      const annoteDls = window.document.querySelectorAll('dt[data-target-cell]');
+      for (const annoteDlNode of annoteDls) {
+        annoteDlNode.addEventListener('click', (event) => {
+          const clickedEl = event.target;
+          if (clickedEl !== selectedAnnoteEl) {
+            unselectCodeLines();
+            const activeEl = window.document.querySelector('dt[data-target-cell].code-annotation-active');
+            if (activeEl) {
+              activeEl.classList.remove('code-annotation-active');
+            }
+            selectCodeLines(clickedEl);
+            clickedEl.classList.add('code-annotation-active');
+          } else {
+            // Unselect the line
+            unselectCodeLines();
+            clickedEl.classList.remove('code-annotation-active');
+          }
+        });
+      }
+  const findCites = (el) => {
+    const parentEl = el.parentElement;
+    if (parentEl) {
+      const cites = parentEl.dataset.cites;
+      if (cites) {
+        return {
+          el,
+          cites: cites.split(' ')
+        };
+      } else {
+        return findCites(el.parentElement)
+      }
+    } else {
+      return undefined;
+    }
+  };
+  var bibliorefs = window.document.querySelectorAll('a[role="doc-biblioref"]');
+  for (var i=0; i<bibliorefs.length; i++) {
+    const ref = bibliorefs[i];
+    const citeInfo = findCites(ref);
+    if (citeInfo) {
+      tippyHover(citeInfo.el, function() {
+        var popup = window.document.createElement('div');
+        citeInfo.cites.forEach(function(cite) {
+          var citeDiv = window.document.createElement('div');
+          citeDiv.classList.add('hanging-indent');
+          citeDiv.classList.add('csl-entry');
+          var biblioDiv = window.document.getElementById('ref-' + cite);
+          if (biblioDiv) {
+            citeDiv.innerHTML = biblioDiv.innerHTML;
+          }
+          popup.appendChild(citeDiv);
+        });
+        return popup.innerHTML;
+      });
+    }
+  }
+});
+</script>
+<nav class="page-navigation">
+  <div class="nav-page nav-page-previous">
+      <a href="./llamppl.cache.html" class="pagination-link  aria-label=" &lt;span="" model="" state&lt;="" span&gt;"="">
+        <i class="bi bi-arrow-left-short"></i> <span class="nav-page-text"><span class="chapter-number">5</span>&nbsp; <span class="chapter-title">Caching model state</span></span>
+      </a>          
+  </div>
+  <div class="nav-page nav-page-next">
+      <a href="./llamppl.smc.html" class="pagination-link" aria-label="<span class='chapter-number'>7</span>&nbsp; <span class='chapter-title'>SMC Sampling of a probabilistic model</span>">
+        <span class="nav-page-text"><span class="chapter-number">7</span>&nbsp; <span class="chapter-title">SMC Sampling of a probabilistic model</span></span> <i class="bi bi-arrow-right-short"></i>
+      </a>
+  </div>
+</nav>
+</div> <!-- /content -->
+
+
+
+
+</body></html>

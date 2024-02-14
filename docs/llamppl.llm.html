@@ -116,7 +116,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
       <button type="button" class="quarto-btn-toggle btn" data-bs-toggle="collapse" data-bs-target=".quarto-sidebar-collapse-item" aria-controls="quarto-sidebar" aria-expanded="false" aria-label="Toggle sidebar navigation" onclick="if (window.quartoToggleHeadroom) { window.quartoToggleHeadroom(); }">
         <i class="bi bi-layout-text-sidebar-reverse"></i>
       </button>
-        <nav class="quarto-page-breadcrumbs" aria-label="breadcrumb"><ol class="breadcrumb"><li class="breadcrumb-item"><a href="./llamppl.llms.html"><span class="chapter-number">4</span>&nbsp; <span class="chapter-title">LLMs: Using llama.clj</span></a></li></ol></nav>
+        <nav class="quarto-page-breadcrumbs" aria-label="breadcrumb"><ol class="breadcrumb"><li class="breadcrumb-item"><a href="./llamppl.llm.html"><span class="chapter-number">4</span>&nbsp; <span class="chapter-title">LLMs: Using llama.clj</span></a></li></ol></nav>
         <a class="flex-grow-1" role="button" data-bs-toggle="collapse" data-bs-target=".quarto-sidebar-collapse-item" aria-controls="quarto-sidebar" aria-expanded="false" aria-label="Toggle sidebar navigation" onclick="if (window.quartoToggleHeadroom) { window.quartoToggleHeadroom(); }">      
         </a>
       <button type="button" class="btn quarto-search-button" aria-label="" onclick="window.quartoOpenSearch();">
@@ -161,7 +161,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 </li>
         <li class="sidebar-item">
   <div class="sidebar-item-container"> 
-  <a href="./llamppl.llms.html" class="sidebar-item-text sidebar-link active">
+  <a href="./llamppl.llm.html" class="sidebar-item-text sidebar-link active">
  <span class="menu-text"><span class="chapter-number">4</span>&nbsp; <span class="chapter-title">LLMs: Using llama.clj</span></span></a>
   </div>
 </li>
@@ -169,6 +169,18 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
   <div class="sidebar-item-container"> 
   <a href="./llamppl.cache.html" class="sidebar-item-text sidebar-link">
  <span class="menu-text"><span class="chapter-number">5</span>&nbsp; <span class="chapter-title">Caching model state</span></span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./llamppl.trie.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">6</span>&nbsp; <span class="chapter-title">A token-trie cache</span></span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./llamppl.smc.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">7</span>&nbsp; <span class="chapter-title">SMC Sampling of a probabilistic model</span></span></a>
   </div>
 </li>
     </ul>
@@ -217,13 +229,13 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
   border-style: none;
 }
 </style>
-<script src="llamppl.llms_files/md-default1.js" type="text/javascript"></script>
-<script src="llamppl.llms_files/md-default2.js" type="text/javascript"></script>
-<script src="llamppl.llms_files/vega3.js" type="text/javascript"></script>
-<script src="llamppl.llms_files/vega4.js" type="text/javascript"></script>
-<script src="llamppl.llms_files/vega5.js" type="text/javascript"></script>
+<script src="llamppl.llm_files/md-default1.js" type="text/javascript"></script>
+<script src="llamppl.llm_files/md-default2.js" type="text/javascript"></script>
+<script src="llamppl.llm_files/vega3.js" type="text/javascript"></script>
+<script src="llamppl.llm_files/vega4.js" type="text/javascript"></script>
+<script src="llamppl.llm_files/vega5.js" type="text/javascript"></script>
 <div class="sourceClojure">
-<div class="sourceCode" id="cb1"><pre class="sourceCode clojure code-with-copy"><code class="sourceCode clojure"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a>(<span class="kw">ns</span> llamppl.llms</span>
+<div class="sourceCode" id="cb1"><pre class="sourceCode clojure code-with-copy"><code class="sourceCode clojure"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a>(<span class="kw">ns</span> llamppl.llm</span>
 <span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a>  (<span class="at">:require</span> [com.phronemophobic.llama <span class="at">:as</span> llama]</span>
 <span id="cb1-3"><a href="#cb1-3" aria-hidden="true" tabindex="-1"></a>            [com.phronemophobic.llama.raw <span class="at">:as</span> raw]</span>
 <span id="cb1-4"><a href="#cb1-4" aria-hidden="true" tabindex="-1"></a>            [com.phronemophobic.llama.util <span class="at">:as</span> llutil]</span>
@@ -240,10 +252,10 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <span id="cb2-2"><a href="#cb2-2" aria-hidden="true" tabindex="-1"></a>(<span class="bu">def</span><span class="fu"> md</span></span>
 <span id="cb2-3"><a href="#cb2-3" aria-hidden="true" tabindex="-1"></a>  (<span class="kw">comp</span> kindly/hide-code kind/md))</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </div>
-<p>We will use <a href="https://github.com/phronmophobic/llama.clj">llama.clj</a>, a Clojure wrapper of llama.cpp.</p>
+<p>We will use <a href="https://github.com/phronmophobic/llama.clj">llama.clj</a>, a Clojure wrapper of llama.cpp. The excellent <a href="https://github.com/phronmophobic/llama.clj?tab=readme-ov-file#documentation">llama.clj docs</a> may provide additional background for this notebook.</p>
 <section id="constants" class="level2" data-number="4.1">
 <h2 data-number="4.1" class="anchored" data-anchor-id="constants"><span class="header-section-number">4.1</span> Constants</h2>
-<p>Path to the LLM:</p>
+<p>Path to the LLM (assuming the <code>MODELS_PATH</code> environment variable is set properly):</p>
 <div class="sourceClojure">
 <div class="sourceCode" id="cb3"><pre class="sourceCode clojure code-with-copy"><code class="sourceCode clojure"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a>(<span class="bu">def</span><span class="fu"> llama7b-path</span></span>
 <span id="cb3-2"><a href="#cb3-2" aria-hidden="true" tabindex="-1"></a>  (<span class="kw">str</span> (System/getenv <span class="st">"MODELS_PATH"</span>)</span>
@@ -263,7 +275,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <span id="cb5-3"><a href="#cb5-3" aria-hidden="true" tabindex="-1"></a>   llama7b-path</span>
 <span id="cb5-4"><a href="#cb5-4" aria-hidden="true" tabindex="-1"></a>   {<span class="at">:use-mlock</span> <span class="va">true</span>}))</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </div>
-<p>A copy of an empty model (to extract basic information):</p>
+<p>Let us keep one copy of an unchanged model (to extract basic information):</p>
 <div class="sourceClojure">
 <div class="sourceCode" id="cb6"><pre class="sourceCode clojure code-with-copy"><code class="sourceCode clojure"><span id="cb6-1"><a href="#cb6-1" aria-hidden="true" tabindex="-1"></a>(<span class="bu">def</span><span class="fu"> base-llama-ctx</span></span>
 <span id="cb6-2"><a href="#cb6-2" aria-hidden="true" tabindex="-1"></a>  (new-llama-ctx))</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
@@ -359,7 +371,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <span id="cb20-7"><a href="#cb20-7" aria-hidden="true" tabindex="-1"></a>      (hanami/histogram <span class="at">:logit</span> {<span class="at">:nbins</span> <span class="dv">100</span>})</span>
 <span id="cb20-8"><a href="#cb20-8" aria-hidden="true" tabindex="-1"></a>      (<span class="kw">assoc</span> <span class="at">:height</span> <span class="dv">200</span>)))</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </div>
-<div><script>vegaEmbed(document.currentScript.parentElement, {"encoding":{"y":{"field":"count","type":"quantitative"},"x":{"scale":{"zero":false},"field":"left","type":"quantitative","title":"logit"},"y2":{"field":0,"type":"quantitative"},"x2":{"scale":{"zero":false},"field":"right","type":"quantitative"}},"mark":"rect","width":400,"background":"floralwhite","height":200,"data":{"url":"llamppl.llms_files\/0.csv","format":{"type":"csv"}}});</script></div>
+<div><script>vegaEmbed(document.currentScript.parentElement, {"encoding":{"y":{"field":"count","type":"quantitative"},"x":{"scale":{"zero":false},"field":"left","type":"quantitative","title":"logit"},"y2":{"field":0,"type":"quantitative"},"x2":{"scale":{"zero":false},"field":"right","type":"quantitative"}},"mark":"rect","width":400,"background":"floralwhite","height":200,"data":{"url":"llamppl.llm_files\/0.csv","format":{"type":"csv"}}});</script></div>
 <p>Example: Picking the next token of the highest probability.</p>
 <div class="sourceClojure">
 <div class="sourceCode" id="cb21"><pre class="sourceCode clojure code-with-copy"><code class="sourceCode clojure"><span id="cb21-1"><a href="#cb21-1" aria-hidden="true" tabindex="-1"></a>(<span class="kw">delay</span></span>
@@ -399,7 +411,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <span id="cb26-4"><a href="#cb26-4" aria-hidden="true" tabindex="-1"></a>    mem))</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </div>
 <div style="background-color:grey;height:2px;width:100%;"></div>
-<div><pre><small><small>source: <a href="https://github.com/daslu/LLaMPPL.clj/blob/main/notebooks/llamppl/llms.clj">notebooks/llamppl/llms.clj</a></small></small></pre></div>
+<div><pre><small><small>source: <a href="https://github.com/daslu/LLaMPPL.clj/blob/main/notebooks/llamppl/llm.clj">notebooks/llamppl/llm.clj</a></small></small></pre></div>
 
 
 </section>
