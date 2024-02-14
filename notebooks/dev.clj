@@ -6,7 +6,7 @@
              :source-path ["index.clj"
                            "setup.clj"
                            "llamppl/utils.clj"
-                           "llamppl/llms.clj"
+                           "llamppl/llm.clj"
                            "llamppl/cache.clj"
                            "llamppl/smc.clj"]
              :base-target-path "docs"
