@@ -100,7 +100,7 @@ We define the cached evaluation as a recursive transformation of a context map. 
                                   (prn [:eval
                                         (path->text path)
                                         '-->
-                                        (llms/untokenize [token])])
+                                        (llms/token->str token)])
                                   (time
                                    (llama/llama-update llama-ctx
                                                        token
@@ -204,7 +204,7 @@ but also ask for the model logits for the next token.")
                                              conj
                                              {:data {:id node-id
                                                      :token token
-                                                     :word (llms/untokenize [token])
+                                                     :word (llms/token->str token)
                                                      :background (if (->> child
                                                                           :llama-state-id
                                                                           (cache/has? *cache))
@@ -264,3 +264,51 @@ but also ask for the model logits for the next token.")
                                   argops/argmax
                                   llms/token->str)])))
      (visualize-trie @*context)]))
+
+
+(md "## Sampling random tokens
+
+Our context holds a sample function `samplef`,
+which allows us to sample tokens according to logits.
+
+For example:")
+
+
+(delay
+  (let [*context (atom (new-context {:seed 1}))
+        {:keys [samplef]} @*context]
+    (->> ["How much wood would a"
+          "How much wood would a woodchuck"
+          "How much wood would a woodchuck chuck"]
+         (mapv
+          (fn [text]
+            (let [logits (->> text
+                              llms/tokenize
+                              (logits! *context))]
+              [text
+               (->> (repeatedly
+                     1000
+                     #(llms/token->str (samplef logits)))
+                    frequencies)]))))))
+
+(md "For convenience, let us use this function to sample one token.
+Note that we change the seed for diversity.
+
+TODO: Handle seeds more carefully for reproducibility..")
+
+(defn sample-once! [*context logits]
+  (-> @*context
+      :llama-ctx
+      (raw/llama_set_rng_seed (rand-int 9999)))
+  ((:samplef @*context)
+   logits))
+
+(md "For example:")
+
+(delay
+  (let [*context (atom (new-context))]
+    (->> "How much wood would a"
+         llms/tokenize
+         (logits! *context)
+         (sample-once! *context)
+         llms/token->str)))
