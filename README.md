@@ -12,7 +12,7 @@ Probably, it will be moved under another organisation in case the project seems 
 
 WIP
 
-At the moment, we demonstrate implementing the Sequential Monte Carlo algoritm on a specific case, the Hard Constraints case generating texts with only short words with a certain choice of M (the Markove kernel) and G (the potential function), not the most efficient one.
+At the moment, we demonstrate implementing the Sequential Monte Carlo algoritm on a specific case, the Hard Constraints case generating texts with only short words with a certain choice of $M$ (the Markov kernel) and $G$ (the potential function), not the most efficient one.
 
 The main effort so far has been in tackling some of the caching challenges.
 
