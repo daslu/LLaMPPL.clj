@@ -16,10 +16,10 @@
 (md "# A token-trie cache
 Following the LLaMPPL [paper](https://arxiv.org/abs/2306.03081) (Section 3, Subsection \"Shared Transformer cache\"), here we implement a token-trie cache of model states.
 
-As we've seen, we may update the LLM model's state with a sequence of tokens, and then ask the model for the logits of the next token. Typically, we may have already seen a prefix of the given sequence, and may retrieve the model state of that time. The token-trie cache holds such prefix sequences in a tree structure.
+As we've seen, we may update the LLM model's state with a sequence of tokens, and then ask the model for the logits of the next token. Typically, we may have already seen a prefix of the given sequence, and may reuse the model state of that time. The token-trie cache holds such prefix sequences, and their corresponding model states, in a tree structure.
 
 ## Evaluation
-We define the cached evaluation as a recursive transformation of a context map. Note that some parts of the map, spefifically the `llama-ctx` model context and the `*cache` atom, are mutable.
+We define cached evaluation as a recursive transformation of a context map. Note that it is not a pure functional transformation, as some parts of the map, spefifically the `llama-ctx` model context and the `*cache` atom, are mutable.
 
 ")
 
@@ -157,8 +157,8 @@ and need to be discarded (using `select-keys`).")
             (select-keys context [:llama-ctx :*cache :samplef :trie :logits]))
     context))
 
-(md "Typically, we not only evaluated a sequence of tokens,
-but also ask for the model logits for the next token.")
+(md "Typically, we not only update the model with a sequence of tokens,
+but are also interested in the model logits for the next token.")
 
 (defn logits! [*context tokens]
   (-> *context
