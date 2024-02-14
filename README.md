@@ -14,3 +14,4 @@ At the moment, we demonstrate implementing the Sequential Monte Carlo algoritm o
 
 The main effort so far has been in tackling some of the caching challenges.
 
+Everything is considered experimental. Changes are expected.
