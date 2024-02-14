@@ -93,7 +93,7 @@ with different values of `max-n-letters`.")
         tokens (->> "How much wood"
                     llm/tokenize
                     (iterate (partial M-step *context))
-                    (take 5)
+                    (take 10)
                     last)]
     {:text (llm/untokenize tokens)
      :G5 (G 5 tokens)
