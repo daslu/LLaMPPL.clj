@@ -62,7 +62,7 @@ We define $M$ as a sampling step
      [(->> #(->> "How much wood"
                  llm/tokenize
                  (iterate (partial M-step *context))
-                 (take 5)
+                 (take 10)
                  last
                  llm/untokenize)
            (repeatedly 5)
