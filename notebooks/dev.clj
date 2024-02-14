@@ -8,6 +8,7 @@
                            "llamppl/utils.clj"
                            "llamppl/llm.clj"
                            "llamppl/cache.clj"
+                           "llamppl/trie.clj"
                            "llamppl/smc.clj"]
              :base-target-path "docs"
              :book {:title "LLaMPPL.clj"}
