@@ -12,11 +12,11 @@
 
 (md "# Caching model state
 
-We will rely on the model's internal [KV-caching](https://www.dipkumar.dev/becoming-the-unbeatable/posts/gpt-kvcache/). Also, following the LLaMPPL [paper](https://arxiv.org/abs/2306.03081) (Section 3, Subsection \"Shared Transformer cache\"), we will implement a trie cache of model states.
+We will rely on the model's internal [KV-caching](https://www.dipkumar.dev/becoming-the-unbeatable/posts/gpt-kvcache/). Also, following the LLaMPPL [paper](https://arxiv.org/abs/2306.03081) (Section 3, Subsection \"Shared Transformer cache\"), we will implement a token-trie cache of model states.
 
 Since the model states are expensive, we cannot store an unlimited number of model states, so we will need a basic storage space for a few of them.
 
-To avoid garbage collection, we will allocate our memory slots space once, and manage them as a simple FIFO storage.
+To avoid unnecessary garbage collection, we will allocate our memory slots space once, and manage their use as a simple FIFO storage.
 
 ## A storage space
 
@@ -29,6 +29,8 @@ Let us create a space to store a few model states. For now, the number of slots 
         n-states
         #(byte-array llm/state-size))))
 
+(md (str "We have " n-states " huge byte arrays:"))
+
 (delay
   (->> states-storage
        (map count)
@@ -37,9 +39,9 @@ Let us create a space to store a few model states. For now, the number of slots 
 (md "As an example, let us try the following:
 * Use our model context to compute the next word for a piece text.
 * Store the model state.
-* Use are model with another text.
+* Use our model with another text.
 * Retrieve the states we strored.
-* Check the next word again - as it the same as the one in the beginning?")
+* Check the next word again - is it the same as the one in the beginning?")
 
 (delay
   (let [llama-ctx (llm/new-llama-ctx)
