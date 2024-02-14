@@ -16,11 +16,13 @@
 
 (md "
 # LLMs: Using llama.clj
-We will use [llama.clj](https://github.com/phronmophobic/llama.clj), a Clojure wrapper of llama.cpp.")
+We will use [llama.clj](https://github.com/phronmophobic/llama.clj), a Clojure wrapper of llama.cpp.
+The excellent [llama.clj docs](https://github.com/phronmophobic/llama.clj?tab=readme-ov-file#documentation)
+may provide additional background for this notebook.")
 
 ;; ## Constants
 
-;; Path to the LLM:
+;; Path to the LLM (assuming the `MODELS_PATH` environment variable is set properly):
 (def llama7b-path
   (str (System/getenv "MODELS_PATH")
        "/llama-2-7b-chat.ggmlv3.q4_0.bin"))
@@ -36,7 +38,7 @@ We will use [llama.clj](https://github.com/phronmophobic/llama.clj), a Clojure w
    llama7b-path
    {:use-mlock true}))
 
-;; A copy of an empty model
+;; Let us keep one copy of an unchanged model
 ;; (to extract basic information):
 (def base-llama-ctx
   (new-llama-ctx))
