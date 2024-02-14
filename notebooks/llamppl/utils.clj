@@ -3,6 +3,8 @@
 
 ;; # A few utility functions
 
+;; ## Time
+
 ;; Getting the time now (useful for reporting):
 (defn now []
   (java.util.Date.))
@@ -10,6 +12,8 @@
 ;; For example:
 (delay
   (now))
+
+;; ## Math
 
 ;; Normalizing a vector or array of numbers
 ;; so that their sum would be `1`:
