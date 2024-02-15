@@ -255,6 +255,7 @@ window.Quarto = {
 </style>
 <script src="index_files/md-default0.js" type="text/javascript"></script>
 <script src="index_files/md-default1.js" type="text/javascript"></script>
+<script src="index_files/cytoscape2.js" type="text/javascript"></script>
 <section id="preface" class="level1" data-number="1">
 <h1 data-number="1"><span class="header-section-number">1</span> Preface</h1>
 <p>This repo explores the <a href="https://github.com/probcomp/LLaMPPL">LLaMPPL</a> underlying algorithms from Clojure using <a href="https://github.com/phronmophobic/llama.clj">llama.clj</a>.</p>
@@ -269,128 +270,122 @@ window.Quarto = {
 </div>
 <div class="sourceClojure">
 <div class="sourceCode" id="cb2"><pre class="sourceCode clojure code-with-copy"><code class="sourceCode clojure"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a>(<span class="kw">delay</span></span>
-<span id="cb2-2"><a href="#cb2-2" aria-hidden="true" tabindex="-1"></a>  (<span class="kw">let</span> [*smc-state (<span class="kw">atom</span> (smc/new-smc-state))]</span>
-<span id="cb2-3"><a href="#cb2-3" aria-hidden="true" tabindex="-1"></a>    (smc/run-smc! *smc-state</span>
-<span id="cb2-4"><a href="#cb2-4" aria-hidden="true" tabindex="-1"></a>                  {<span class="at">:cache-threshold</span> <span class="dv">30</span></span>
-<span id="cb2-5"><a href="#cb2-5" aria-hidden="true" tabindex="-1"></a>                   <span class="at">:seed</span> <span class="dv">1</span></span>
-<span id="cb2-6"><a href="#cb2-6" aria-hidden="true" tabindex="-1"></a>                   <span class="at">:base-text</span> <span class="st">"The Fed says"</span></span>
-<span id="cb2-7"><a href="#cb2-7" aria-hidden="true" tabindex="-1"></a>                   <span class="at">:max-n-letters</span> <span class="dv">5</span></span>
-<span id="cb2-8"><a href="#cb2-8" aria-hidden="true" tabindex="-1"></a>                   <span class="at">:N</span> <span class="dv">10</span></span>
-<span id="cb2-9"><a href="#cb2-9" aria-hidden="true" tabindex="-1"></a>                   <span class="at">:K</span> <span class="dv">3</span></span>
-<span id="cb2-10"><a href="#cb2-10" aria-hidden="true" tabindex="-1"></a>                   <span class="at">:initial-N</span> <span class="dv">5</span></span>
-<span id="cb2-11"><a href="#cb2-11" aria-hidden="true" tabindex="-1"></a>                   <span class="at">:max-text-length</span> <span class="dv">10</span>})</span>
-<span id="cb2-12"><a href="#cb2-12" aria-hidden="true" tabindex="-1"></a>    (<span class="kw">-&gt;</span> <span class="at">@*smc-state</span></span>
-<span id="cb2-13"><a href="#cb2-13" aria-hidden="true" tabindex="-1"></a>        <span class="at">:particles</span></span>
-<span id="cb2-14"><a href="#cb2-14" aria-hidden="true" tabindex="-1"></a>        (tc/map-columns <span class="at">:finished</span> [<span class="at">:x</span>] llm/finished?)</span>
-<span id="cb2-15"><a href="#cb2-15" aria-hidden="true" tabindex="-1"></a>        (tc/map-columns <span class="at">:length</span> [<span class="at">:x</span>] <span class="kw">count</span>)</span>
-<span id="cb2-16"><a href="#cb2-16" aria-hidden="true" tabindex="-1"></a>        (tc/map-columns <span class="at">:text</span> [<span class="at">:x</span>] llm/untokenize)</span>
-<span id="cb2-17"><a href="#cb2-17" aria-hidden="true" tabindex="-1"></a>        (tc/drop-columns [<span class="at">:x</span>])</span>
-<span id="cb2-18"><a href="#cb2-18" aria-hidden="true" tabindex="-1"></a>        (tc/set-dataset-name <span class="st">"texts"</span>)</span>
-<span id="cb2-19"><a href="#cb2-19" aria-hidden="true" tabindex="-1"></a>        (tech.v3.dataset.print/print-range <span class="at">:all</span>))))</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<span id="cb2-2"><a href="#cb2-2" aria-hidden="true" tabindex="-1"></a>  (<span class="kw">let</span> [*context (<span class="kw">atom</span> (trie/new-context {<span class="at">:seed</span> <span class="dv">1</span>}))</span>
+<span id="cb2-3"><a href="#cb2-3" aria-hidden="true" tabindex="-1"></a>        *smc-state (<span class="kw">atom</span> (smc/new-smc-state))]</span>
+<span id="cb2-4"><a href="#cb2-4" aria-hidden="true" tabindex="-1"></a>    (smc/run-smc! *context</span>
+<span id="cb2-5"><a href="#cb2-5" aria-hidden="true" tabindex="-1"></a>                  *smc-state</span>
+<span id="cb2-6"><a href="#cb2-6" aria-hidden="true" tabindex="-1"></a>                  {<span class="at">:cache-threshold</span> <span class="dv">30</span></span>
+<span id="cb2-7"><a href="#cb2-7" aria-hidden="true" tabindex="-1"></a>                   <span class="at">:seed</span> <span class="dv">1</span></span>
+<span id="cb2-8"><a href="#cb2-8" aria-hidden="true" tabindex="-1"></a>                   <span class="at">:base-text</span> <span class="st">"The Fed says"</span></span>
+<span id="cb2-9"><a href="#cb2-9" aria-hidden="true" tabindex="-1"></a>                   <span class="at">:max-n-letters</span> <span class="dv">5</span></span>
+<span id="cb2-10"><a href="#cb2-10" aria-hidden="true" tabindex="-1"></a>                   <span class="at">:N</span> <span class="dv">10</span></span>
+<span id="cb2-11"><a href="#cb2-11" aria-hidden="true" tabindex="-1"></a>                   <span class="at">:K</span> <span class="dv">3</span></span>
+<span id="cb2-12"><a href="#cb2-12" aria-hidden="true" tabindex="-1"></a>                   <span class="at">:initial-N</span> <span class="dv">5</span></span>
+<span id="cb2-13"><a href="#cb2-13" aria-hidden="true" tabindex="-1"></a>                   <span class="at">:max-text-length</span> <span class="dv">10</span>})</span>
+<span id="cb2-14"><a href="#cb2-14" aria-hidden="true" tabindex="-1"></a>    (kind/fragment</span>
+<span id="cb2-15"><a href="#cb2-15" aria-hidden="true" tabindex="-1"></a>     [(<span class="kw">-&gt;</span> <span class="at">@*smc-state</span></span>
+<span id="cb2-16"><a href="#cb2-16" aria-hidden="true" tabindex="-1"></a>          <span class="at">:particles</span></span>
+<span id="cb2-17"><a href="#cb2-17" aria-hidden="true" tabindex="-1"></a>          (tc/map-columns <span class="at">:finished</span> [<span class="at">:x</span>] llm/finished?)</span>
+<span id="cb2-18"><a href="#cb2-18" aria-hidden="true" tabindex="-1"></a>          (tc/map-columns <span class="at">:length</span> [<span class="at">:x</span>] <span class="kw">count</span>)</span>
+<span id="cb2-19"><a href="#cb2-19" aria-hidden="true" tabindex="-1"></a>          (tc/map-columns <span class="at">:text</span> [<span class="at">:x</span>] llm/untokenize)</span>
+<span id="cb2-20"><a href="#cb2-20" aria-hidden="true" tabindex="-1"></a>          (tc/drop-columns [<span class="at">:x</span>])</span>
+<span id="cb2-21"><a href="#cb2-21" aria-hidden="true" tabindex="-1"></a>          (tc/set-dataset-name <span class="st">"texts"</span>)</span>
+<span id="cb2-22"><a href="#cb2-22" aria-hidden="true" tabindex="-1"></a>          (tech.v3.dataset.print/print-range <span class="at">:all</span>)</span>
+<span id="cb2-23"><a href="#cb2-23" aria-hidden="true" tabindex="-1"></a>          kind/table)</span>
+<span id="cb2-24"><a href="#cb2-24" aria-hidden="true" tabindex="-1"></a>      (trie/visualize-trie <span class="at">@*context</span>)])))</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </div>
-<p>texts [10 6]:</p>
-<table class="table">
-<colgroup>
-<col style="width: 10%">
-<col style="width: 27%">
-<col style="width: 5%">
-<col style="width: 10%">
-<col style="width: 8%">
-<col style="width: 38%">
-</colgroup>
+<table class="table" data-quarto-postprocess="true">
 <thead>
 <tr class="header">
-<th style="text-align: right;">:w</th>
-<th>:time</th>
-<th style="text-align: right;">:gen</th>
-<th>:finished</th>
-<th style="text-align: right;">:length</th>
-<th>:text</th>
+<th data-quarto-table-cell-role="th">:w</th>
+<th data-quarto-table-cell-role="th">:time</th>
+<th data-quarto-table-cell-role="th">:gen</th>
+<th data-quarto-table-cell-role="th">:finished</th>
+<th data-quarto-table-cell-role="th">:length</th>
+<th data-quarto-table-cell-role="th">:text</th>
 </tr>
 </thead>
 <tbody>
 <tr class="odd">
-<td style="text-align: right;">0.03333333</td>
-<td>Thu Feb 15 01:36:35 IST 2024</td>
-<td style="text-align: right;">7</td>
+<td>0.037037037037037035</td>
+<td>Thu Feb 15 01:56:25 IST 2024</td>
+<td>7</td>
 <td>false</td>
-<td style="text-align: right;">10</td>
-<td>The Fed says it’s all about the money</td>
+<td>10</td>
+<td>The Fed says they have a long way to go</td>
 </tr>
 <tr class="even">
-<td style="text-align: right;">0.03333333</td>
-<td>Thu Feb 15 01:36:35 IST 2024</td>
-<td style="text-align: right;">7</td>
+<td>0.037037037037037035</td>
+<td>Thu Feb 15 01:56:25 IST 2024</td>
+<td>7</td>
 <td>false</td>
-<td style="text-align: right;">10</td>
-<td>The Fed says it’s all about the money</td>
+<td>10</td>
+<td>The Fed says they have a long way to go</td>
 </tr>
 <tr class="odd">
-<td style="text-align: right;">0.03333333</td>
-<td>Thu Feb 15 01:36:37 IST 2024</td>
-<td style="text-align: right;">7</td>
+<td>0.037037037037037035</td>
+<td>Thu Feb 15 01:56:25 IST 2024</td>
+<td>7</td>
 <td>false</td>
-<td style="text-align: right;">10</td>
-<td>The Fed says it were but the GOP lies</td>
+<td>10</td>
+<td>The Fed says they have a long way to go</td>
 </tr>
 <tr class="even">
-<td style="text-align: right;">0.03333333</td>
-<td>Thu Feb 15 01:36:37 IST 2024</td>
-<td style="text-align: right;">7</td>
+<td>0.037037037037037035</td>
+<td>Thu Feb 15 01:56:25 IST 2024</td>
+<td>7</td>
 <td>false</td>
-<td style="text-align: right;">10</td>
-<td>The Fed says it were but the GOP says</td>
+<td>10</td>
+<td>The Fed says they have a long- to-</td>
 </tr>
 <tr class="odd">
-<td style="text-align: right;">0.03333333</td>
-<td>Thu Feb 15 01:36:37 IST 2024</td>
-<td style="text-align: right;">7</td>
+<td>0.037037037037037035</td>
+<td>Thu Feb 15 01:56:25 IST 2024</td>
+<td>7</td>
 <td>false</td>
-<td style="text-align: right;">10</td>
-<td>The Fed says it were but the GOP won</td>
+<td>10</td>
+<td>The Fed says they have a long- to short</td>
 </tr>
 <tr class="even">
-<td style="text-align: right;">0.03333333</td>
-<td>Thu Feb 15 01:36:37 IST 2024</td>
-<td style="text-align: right;">7</td>
+<td>0.037037037037037035</td>
+<td>Thu Feb 15 01:56:25 IST 2024</td>
+<td>7</td>
 <td>false</td>
-<td style="text-align: right;">10</td>
-<td>The Fed says it were but the GOP will</td>
+<td>10</td>
+<td>The Fed says they have a long- to short</td>
 </tr>
 <tr class="odd">
-<td style="text-align: right;">0.03333333</td>
-<td>Thu Feb 15 01:36:37 IST 2024</td>
-<td style="text-align: right;">7</td>
+<td>0.037037037037037035</td>
+<td>Thu Feb 15 01:56:26 IST 2024</td>
+<td>7</td>
 <td>false</td>
-<td style="text-align: right;">10</td>
-<td>The Fed says it were but the GOP says</td>
+<td>10</td>
+<td>The Fed says this is a sign of a sust</td>
 </tr>
 <tr class="even">
-<td style="text-align: right;">0.03333333</td>
-<td>Thu Feb 15 01:36:37 IST 2024</td>
-<td style="text-align: right;">7</td>
+<td>0.037037037037037035</td>
+<td>Thu Feb 15 01:56:27 IST 2024</td>
+<td>7</td>
 <td>false</td>
-<td style="text-align: right;">10</td>
-<td>The Fed says it were but the rest of the</td>
+<td>10</td>
+<td>The Fed says this is a sign that the US</td>
 </tr>
 <tr class="odd">
-<td style="text-align: right;">0.03333333</td>
-<td>Thu Feb 15 01:36:37 IST 2024</td>
-<td style="text-align: right;">7</td>
+<td>0.037037037037037035</td>
+<td>Thu Feb 15 01:56:28 IST 2024</td>
+<td>7</td>
 <td>false</td>
-<td style="text-align: right;">10</td>
-<td>The Fed says it were but the rest of the</td>
-</tr>
-<tr class="even">
-<td style="text-align: right;">0.03333333</td>
-<td>Thu Feb 15 01:36:37 IST 2024</td>
-<td style="text-align: right;">7</td>
-<td>false</td>
-<td style="text-align: right;">10</td>
-<td>The Fed says it were but the rest of the</td>
+<td>10</td>
+<td>The Fed says this is a sign of the US</td>
 </tr>
 </tbody>
 </table>
+<div style="height:400px;width:400px;"><script>
+{
+  value = {"elements":{"nodes":[{"data":{"id":"0","word":"(root)"}},{"data":{"id":"1","token":1576,"word":"The","background":"lightgreen"}},{"data":{"id":"2","token":17972,"word":" Fed","background":"lightgreen"}},{"data":{"id":"3","token":4083,"word":" says","background":"lightgreen"}},{"data":{"id":"4","token":19257,"word":" rates","background":"lightgreen"}},{"data":{"id":"5","token":896,"word":" they","background":"lightgreen"}},{"data":{"id":"6","token":278,"word":" the","background":"lightgreen"}},{"data":{"id":"7","token":372,"word":" it","background":"lightgreen"}},{"data":{"id":"8","token":29892,"word":",","background":"lightgreen"}},{"data":{"id":"9","token":445,"word":" this","background":"lightgreen"}},{"data":{"id":"10","token":1346,"word":" \u201c","background":"lightgreen"}},{"data":{"id":"11","token":674,"word":" will","background":"lightgreen"}},{"data":{"id":"12","token":505,"word":" have","background":"lightgreen"}},{"data":{"id":"13","token":263,"word":" a","background":"lightgreen"}},{"data":{"id":"14","token":694,"word":" no","background":"lightgreen"}},{"data":{"id":"15","token":1472,"word":" long","background":"lightgreen"}},{"data":{"id":"16","token":14581,"word":" dual","background":"lightgreen"}},{"data":{"id":"17","token":29899,"word":"-","background":"lightgreen"}},{"data":{"id":"18","token":982,"word":" way","background":"lightgreen"}},{"data":{"id":"19","token":304,"word":" to","background":"lightgreen"}},{"data":{"id":"20","token":304,"word":" to","background":"lightgreen"}},{"data":{"id":"21","token":9619,"word":" mand","background":"lightgreen"}},{"data":{"id":"22","token":10901,"word":" cry","background":"lightgreen"}},{"data":{"id":"23","token":1900,"word":" best","background":"lightgreen"}},{"data":{"id":"24","token":982,"word":" way","background":"lightgreen"}},{"data":{"id":"25","token":304,"word":" to","background":"lightgreen"}},{"data":{"id":"26","token":5040,"word":" stop","background":"lightgreen"}},{"data":{"id":"27","token":4414,"word":" infl","background":"lightgreen"}},{"data":{"id":"28","token":674,"word":" will","background":"lightgreen"}},{"data":{"id":"29","token":338,"word":" is","background":"lightgreen"}},{"data":{"id":"30","token":1369,"word":" start","background":"lightgreen"}},{"data":{"id":"31","token":269,"word":" s","background":"lightgreen"}},{"data":{"id":"32","token":278,"word":" the","background":"lightgreen"}},{"data":{"id":"33","token":376,"word":" \"","background":"lightgreen"}},{"data":{"id":"34","token":10310,"word":"Don","background":"lightgreen"}},{"data":{"id":"35","token":4806,"word":"We","background":"lightgreen"}},{"data":{"id":"36","token":29915,"word":"'","background":"lightgreen"}},{"data":{"id":"37","token":29915,"word":"'","background":"lightgreen"}},{"data":{"id":"38","token":338,"word":" is","background":"lightgreen"}},{"data":{"id":"39","token":263,"word":" a","background":"lightgreen"}},{"data":{"id":"40","token":1804,"word":" sign","background":"lightgreen"}},{"data":{"id":"41","token":310,"word":" of","background":"lightgreen"}},{"data":{"id":"42","token":393,"word":" that","background":"lightgreen"}},{"data":{"id":"43","token":263,"word":" a","background":"lightgreen"}},{"data":{"id":"44","token":4414,"word":" infl","background":"lightgreen"}},{"data":{"id":"45","token":278,"word":" the","background":"lightgreen"}},{"data":{"id":"46","token":278,"word":" the","background":"lightgreen"}},{"data":{"id":"47","token":29950,"word":"H","background":"lightgreen"}},{"data":{"id":"48","token":29924,"word":"M","background":"lightgreen"}},{"data":{"id":"49","token":681,"word":"ous","background":"lightgreen"}},{"data":{"id":"50","token":858,"word":"yst","background":"lightgreen"}}],"edges":[{"data":{"id":"0-1","source":"0","target":"1"}},{"data":{"id":"1-2","source":"1","target":"2"}},{"data":{"id":"2-3","source":"2","target":"3"}},{"data":{"id":"3-4","source":"3","target":"4"}},{"data":{"id":"3-5","source":"3","target":"5"}},{"data":{"id":"3-6","source":"3","target":"6"}},{"data":{"id":"3-7","source":"3","target":"7"}},{"data":{"id":"3-8","source":"3","target":"8"}},{"data":{"id":"3-9","source":"3","target":"9"}},{"data":{"id":"3-10","source":"3","target":"10"}},{"data":{"id":"4-11","source":"4","target":"11"}},{"data":{"id":"5-12","source":"5","target":"12"}},{"data":{"id":"12-13","source":"12","target":"13"}},{"data":{"id":"12-14","source":"12","target":"14"}},{"data":{"id":"13-15","source":"13","target":"15"}},{"data":{"id":"13-16","source":"13","target":"16"}},{"data":{"id":"15-17","source":"15","target":"17"}},{"data":{"id":"15-18","source":"15","target":"18"}},{"data":{"id":"17-19","source":"17","target":"19"}},{"data":{"id":"18-20","source":"18","target":"20"}},{"data":{"id":"16-21","source":"16","target":"21"}},{"data":{"id":"14-22","source":"14","target":"22"}},{"data":{"id":"6-23","source":"6","target":"23"}},{"data":{"id":"23-24","source":"23","target":"24"}},{"data":{"id":"24-25","source":"24","target":"25"}},{"data":{"id":"25-26","source":"25","target":"26"}},{"data":{"id":"26-27","source":"26","target":"27"}},{"data":{"id":"7-28","source":"7","target":"28"}},{"data":{"id":"7-29","source":"7","target":"29"}},{"data":{"id":"28-30","source":"28","target":"30"}},{"data":{"id":"30-31","source":"30","target":"31"}},{"data":{"id":"29-32","source":"29","target":"32"}},{"data":{"id":"8-33","source":"8","target":"33"}},{"data":{"id":"33-34","source":"33","target":"34"}},{"data":{"id":"33-35","source":"33","target":"35"}},{"data":{"id":"34-36","source":"34","target":"36"}},{"data":{"id":"35-37","source":"35","target":"37"}},{"data":{"id":"9-38","source":"9","target":"38"}},{"data":{"id":"38-39","source":"38","target":"39"}},{"data":{"id":"39-40","source":"39","target":"40"}},{"data":{"id":"40-41","source":"40","target":"41"}},{"data":{"id":"40-42","source":"40","target":"42"}},{"data":{"id":"41-43","source":"41","target":"43"}},{"data":{"id":"41-44","source":"41","target":"44"}},{"data":{"id":"41-45","source":"41","target":"45"}},{"data":{"id":"42-46","source":"42","target":"46"}},{"data":{"id":"10-47","source":"10","target":"47"}},{"data":{"id":"10-48","source":"10","target":"48"}},{"data":{"id":"47-49","source":"47","target":"49"}},{"data":{"id":"48-50","source":"48","target":"50"}}]},"style":[{"selector":"node","css":{"content":"data(word)","text-valign":"center","text-halign":"center","height":50,"width":50,"background-color":"data(background)"}},{"selector":"edge","css":{"curve-style":"bezier","target-arrow-shape":"triangle"}}],"layout":{"name":"cose"}};
+  value['container'] = document.currentScript.parentElement;
+  cytoscape(value);
+};</script></div>
 <div style="background-color:grey;height:2px;width:100%;"></div>
 <div><pre><small><small>source: <a href="https://github.com/daslu/LLaMPPL.clj/blob/main/notebooks/index.clj">notebooks/index.clj</a></small></small></pre></div>
 
