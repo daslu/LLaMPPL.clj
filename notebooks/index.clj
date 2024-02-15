@@ -1,10 +1,7 @@
 ^:kindly/hide-code
 (ns index
   (:require [scicloj.kindly.v4.kind :as kind]
-            [scicloj.kindly.v4.api :as kindly]
-            [llamppl.trie :as trie]
-            [llamppl.smc :as smc]
-            [tablecloth.api :as tc]))
+            [scicloj.kindly.v4.api :as kindly]))
 
 ^:kindly/hide-code
 (def md
@@ -31,9 +28,9 @@ and using only words of at most 5 letters.")
 
 
 (require '[llamppl.llm :as llm]
+         '[llamppl.trie :as trie]
          '[llamppl.smc :as smc]
          '[tablecloth.api :as tc])
-
 
 (delay
   (let [*context (atom (trie/new-context {:seed 1}))
