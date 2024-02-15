@@ -30,7 +30,8 @@ and using only words of at most 5 letters.")
 (require '[llamppl.llm :as llm]
          '[llamppl.trie :as trie]
          '[llamppl.smc :as smc]
-         '[tablecloth.api :as tc])
+         '[tablecloth.api :as tc]
+         '[scicloj.kindly.v4.kind :as kind])
 
 (delay
   (let [*context (atom (trie/new-context {:seed 1}))
